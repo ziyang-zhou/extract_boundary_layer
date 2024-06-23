@@ -23,8 +23,9 @@ le_cut = eval(settings.at["le_cut", settings.columns[0]])
 te_cut = eval(settings.at["te_cut", settings.columns[0]])
 include_pressure_side = settings.at["include_pressure_side", settings.columns[0]]
 refinement_factor = eval(settings.at["refinement_factor", settings.columns[0]])
+delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary layer thickness
 
-file = 'tr-meas-surface_first_70511.hdf5'
+file = '../mesh/tr-meas-surface_first_70511.hdf5'
 b = h5py.File(file,'r')
 #Investigate content of file
 print('zones in base b',b.keys())
@@ -118,7 +119,7 @@ else:
 plt.figure()
 plt.plot(x_coord,y_coord)
 plt.plot(xvals,yvals)
-plt.savefig('domain_plot.png')
+plt.savefig('../mesh/domain_plot.png')
 print('full domain saved')
 # In[6]:
 
@@ -130,7 +131,7 @@ plt.figure()
 plt.plot(xvals,yvals,linestyle='dashed')
 plt.plot(x_coord[keep],y_coord[keep])
 plt.axis('equal')
-plt.savefig('domain_extent.png')
+plt.savefig('../mesh/domain_extent.png')
 print('extracted domain saved')
 
 
@@ -149,7 +150,6 @@ ls = sprof[-1]
 fx = sintp.interp1d(sprof,xprof)
 fy = sintp.interp1d(sprof,yprof)
 
-
 # In[8]:
 
 #declaration of dr - step size in new curvilinear array of streamwise coordinate.
@@ -157,7 +157,6 @@ dr = 85e-6/refinement_factor
 zmin = -0.0075776
 zmax = 0.0075776
 voxel_min = (zmax-zmin)/1024
-dr = 6*voxel_min
 dr = (zmax-zmin)/170
 
 # In[9]:
@@ -205,7 +204,7 @@ vec_n_prof[:,1] = sim.gaussian_filter1d(vec_t_prof[:,0],sigma=10, order=0, mode=
 
 plt.figure(figsize=(15,10))
 plt.plot(vec_x_prof,vec_n_prof[:,1])
-plt.savefig('surface_vector.png')
+plt.savefig('../mesh/surface_vector.png')
 
 # In[10]:
 plt.figure()
@@ -214,25 +213,29 @@ plt.quiver(vec_x_prof,vec_y_prof,vec_n_prof[:,0],vec_n_prof[:,1])
 plt.plot(xvals,yvals,linestyle='dashed')
 plt.plot(x_coord[keep],y_coord[keep])
 plt.axis('equal')
-plt.savefig('surface_vector_2.png')
+plt.savefig('../mesh/surface_vector_2.png')
 
 # In[11]:
 
 dn0 = 20e-6
 dn_max = 120e-6
 dn_q = 1.03
-N = 50
+target_height = delta_95*2 #Target height for data extraction
 Nn = 73
-dn = np.zeros(Nn,)
-for idx in range(Nn):
-    dn[idx] = min(dn0*dn_q**idx,dn_max)
 
-vec_n = np.zeros(Nn+1,)
-vec_n[1:] = np.cumsum(dn)
+while target_height > N_0:
+    Nn += 1
+    dn = np.zeros(Nn,)
+    for idx in range(Nn):
+        dn[idx] = min(dn0*dn_q**idx,dn_max)
+
+    vec_n = np.zeros(Nn+1,)
+    vec_n[1:] = np.cumsum(dn)
+    N_0 = np.max(vec_n[1:])
     
 plt.figure()
 plt.plot(vec_n,'o')
-plt.savefig('normal_vector.png')
+plt.savefig('../mesh/normal_vector.png')
 
 
 # In[12]:
@@ -247,7 +250,7 @@ for idx,nv in enumerate(vec_n):
 plt.figure()
 plt.contourf(Xmat,Ymat,np.ones_like(Xmat),linestyles='solid')
 plt.axis('equal')
-plt.savefig('surface_grid')
+plt.savefig('../mesh/surface_grid')
 
 
 # In[13]:
@@ -259,7 +262,7 @@ bi[0][0]['x']=Xmat
 bi[0][0]['y']=Ymat
 w=Writer('bin_tp')
 w['base']=bi
-w['filename']='interpolation_grid.plt'
+w['filename']='../mesh/interpolation_grid.plt'
 w.dump()
 
 
@@ -302,12 +305,12 @@ bv[0][0]['norm_y']=Nvol[:,:,:,1]
 bv[0][0]['norm_z']=Nvol[:,:,:,2]
 # For visualization / quality check 
 w=Writer('bin_tp')
-w['filename']='interpolation_3d_grid.plt'
+w['filename']='../mesh/interpolation_3d_grid.plt'
 w['base']=bv
 w.dump()
 # For later usage
 w=Writer('hdf_antares')
-w['filename']='interpolation_3d_grid'
+w['filename']='../mesh/interpolation_3d_grid'
 w['base']=bv
 w.dump()
 
@@ -329,7 +332,7 @@ print(np.amax(bv[0][0][('cell_volume','node')]))
 # In[19]:
 
 
-fid = h5py.File('interpolation_3d_grid.hdf5','w')
+fid = h5py.File('../mesh/interpolation_3d_grid.hdf5','w')
 fid['/x']=Xvol.flatten()
 fid['/y']=Yvol.flatten()
 fid['/z']=Zvol.flatten()
@@ -340,7 +343,7 @@ fid.close()
 # In[20]:
 
 
-fid = h5py.File('interpolation_3d_grid_dims.hdf5','w')
+fid = h5py.File('../mesh/interpolation_3d_grid_dims.hdf5','w')
 fid['/x']=Xvol
 fid['/y']=Yvol
 fid['/z']=Zvol
