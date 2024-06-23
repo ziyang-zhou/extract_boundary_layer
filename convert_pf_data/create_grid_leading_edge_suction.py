@@ -23,9 +23,14 @@ le_cut = eval(settings.at["le_cut", settings.columns[0]])
 te_cut = eval(settings.at["te_cut", settings.columns[0]])
 include_pressure_side = settings.at["include_pressure_side", settings.columns[0]]
 refinement_factor = eval(settings.at["refinement_factor", settings.columns[0]])
+<<<<<<< HEAD
 delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary layer thickness
 
 file = '../mesh/tr-meas-surface_first_70511.hdf5'
+=======
+
+file = 'tr-meas-surface_first_70511.hdf5'
+>>>>>>> 448bf0e5de47684dea93585e623a1d75623e339a
 b = h5py.File(file,'r')
 #Investigate content of file
 print('zones in base b',b.keys())
@@ -119,7 +124,11 @@ else:
 plt.figure()
 plt.plot(x_coord,y_coord)
 plt.plot(xvals,yvals)
+<<<<<<< HEAD
 plt.savefig('../mesh/domain_plot.png')
+=======
+plt.savefig('domain_plot.png')
+>>>>>>> 448bf0e5de47684dea93585e623a1d75623e339a
 print('full domain saved')
 # In[6]:
 
@@ -131,7 +140,11 @@ plt.figure()
 plt.plot(xvals,yvals,linestyle='dashed')
 plt.plot(x_coord[keep],y_coord[keep])
 plt.axis('equal')
+<<<<<<< HEAD
 plt.savefig('../mesh/domain_extent.png')
+=======
+plt.savefig('domain_extent.png')
+>>>>>>> 448bf0e5de47684dea93585e623a1d75623e339a
 print('extracted domain saved')
 
 
@@ -204,7 +217,11 @@ vec_n_prof[:,1] = sim.gaussian_filter1d(vec_t_prof[:,0],sigma=10, order=0, mode=
 
 plt.figure(figsize=(15,10))
 plt.plot(vec_x_prof,vec_n_prof[:,1])
+<<<<<<< HEAD
 plt.savefig('../mesh/surface_vector.png')
+=======
+plt.savefig('surface_vector.png')
+>>>>>>> 448bf0e5de47684dea93585e623a1d75623e339a
 
 # In[10]:
 plt.figure()
@@ -213,13 +230,18 @@ plt.quiver(vec_x_prof,vec_y_prof,vec_n_prof[:,0],vec_n_prof[:,1])
 plt.plot(xvals,yvals,linestyle='dashed')
 plt.plot(x_coord[keep],y_coord[keep])
 plt.axis('equal')
+<<<<<<< HEAD
 plt.savefig('../mesh/surface_vector_2.png')
+=======
+plt.savefig('surface_vector_2.png')
+>>>>>>> 448bf0e5de47684dea93585e623a1d75623e339a
 
 # In[11]:
 
 dn0 = 20e-6
 dn_max = 120e-6
 dn_q = 1.03
+<<<<<<< HEAD
 target_height = delta_95*2 #Target height for data extraction
 Nn = 73
 
@@ -236,6 +258,20 @@ while target_height > N_0:
 plt.figure()
 plt.plot(vec_n,'o')
 plt.savefig('../mesh/normal_vector.png')
+=======
+N = 50
+Nn = 73
+dn = np.zeros(Nn,)
+for idx in range(Nn):
+    dn[idx] = min(dn0*dn_q**idx,dn_max)
+
+vec_n = np.zeros(Nn+1,)
+vec_n[1:] = np.cumsum(dn)
+    
+plt.figure()
+plt.plot(vec_n,'o')
+plt.savefig('normal_vector.png')
+>>>>>>> 448bf0e5de47684dea93585e623a1d75623e339a
 
 
 # In[12]:
@@ -250,7 +286,11 @@ for idx,nv in enumerate(vec_n):
 plt.figure()
 plt.contourf(Xmat,Ymat,np.ones_like(Xmat),linestyles='solid')
 plt.axis('equal')
+<<<<<<< HEAD
 plt.savefig('../mesh/surface_grid')
+=======
+plt.savefig('surface_grid')
+>>>>>>> 448bf0e5de47684dea93585e623a1d75623e339a
 
 
 # In[13]:
@@ -262,7 +302,11 @@ bi[0][0]['x']=Xmat
 bi[0][0]['y']=Ymat
 w=Writer('bin_tp')
 w['base']=bi
+<<<<<<< HEAD
 w['filename']='../mesh/interpolation_grid.plt'
+=======
+w['filename']='interpolation_grid.plt'
+>>>>>>> 448bf0e5de47684dea93585e623a1d75623e339a
 w.dump()
 
 
@@ -305,12 +349,20 @@ bv[0][0]['norm_y']=Nvol[:,:,:,1]
 bv[0][0]['norm_z']=Nvol[:,:,:,2]
 # For visualization / quality check 
 w=Writer('bin_tp')
+<<<<<<< HEAD
 w['filename']='../mesh/interpolation_3d_grid.plt'
+=======
+w['filename']='interpolation_3d_grid.plt'
+>>>>>>> 448bf0e5de47684dea93585e623a1d75623e339a
 w['base']=bv
 w.dump()
 # For later usage
 w=Writer('hdf_antares')
+<<<<<<< HEAD
 w['filename']='../mesh/interpolation_3d_grid'
+=======
+w['filename']='interpolation_3d_grid'
+>>>>>>> 448bf0e5de47684dea93585e623a1d75623e339a
 w['base']=bv
 w.dump()
 
@@ -332,7 +384,11 @@ print(np.amax(bv[0][0][('cell_volume','node')]))
 # In[19]:
 
 
+<<<<<<< HEAD
 fid = h5py.File('../mesh/interpolation_3d_grid.hdf5','w')
+=======
+fid = h5py.File('interpolation_3d_grid.hdf5','w')
+>>>>>>> 448bf0e5de47684dea93585e623a1d75623e339a
 fid['/x']=Xvol.flatten()
 fid['/y']=Yvol.flatten()
 fid['/z']=Zvol.flatten()
@@ -343,7 +399,11 @@ fid.close()
 # In[20]:
 
 
+<<<<<<< HEAD
 fid = h5py.File('../mesh/interpolation_3d_grid_dims.hdf5','w')
+=======
+fid = h5py.File('interpolation_3d_grid_dims.hdf5','w')
+>>>>>>> 448bf0e5de47684dea93585e623a1d75623e339a
 fid['/x']=Xvol
 fid['/y']=Yvol
 fid['/z']=Zvol
