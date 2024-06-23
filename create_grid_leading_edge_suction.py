@@ -222,6 +222,7 @@ dn_max = 120e-6
 dn_q = 1.03
 target_height = delta_95*2 #Target height for data extraction
 Nn = 73
+N_0 = 0
 
 while target_height > N_0:
     Nn += 1
