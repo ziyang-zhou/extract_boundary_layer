@@ -1,0 +1,17 @@
+# Input data (Required)
+directory: ../
+
+# this is the name of the surface file to convert (Required)
+fnc_filename: mean_flow_snapshot_shortened_3000_4000.fnc 
+
+# Verbosity (information will be displayed during the convertion)
+verbose: True
+casename: frame
+
+# Output data
+output_directory: ../frame_data
+
+# Instant
+frame:
+  - 3000
+  - 4000
