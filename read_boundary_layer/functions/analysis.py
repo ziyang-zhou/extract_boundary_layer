@@ -171,3 +171,13 @@ def reattachment_location(cf,x_coord):
                 print('index',i,'attach',x_attach[i])
     print('x_attach',x_attach)           
     return x_attach
+
+def get_pearson_corr(signal_1,signal_2,dt):
+	#takes in two signals (input as fluctuations about the mean) and outputs the cross-correlation with time lag
+	#signal_1 = signal_1 - np.average(signal_1)
+	#signal_2 = signal_2 - np.average(signal_1)
+	signal_1 = signal_1/(np.std(signal_1)*np.sqrt(len(signal_1)))
+	signal_2 = signal_2/(np.std(signal_2)*np.sqrt(len(signal_2)))
+	cross_norm = sig.correlate(signal_1, signal_2, mode='full', method='direct')
+	time_cross_corr = np.arange(-len(signal_1), len(signal_1)-1)*dt
+	return time_cross_corr,cross_norm

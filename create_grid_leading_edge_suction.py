@@ -220,7 +220,7 @@ plt.savefig('../mesh/surface_vector_2.png')
 dn0 = 20e-6
 dn_max = 120e-6
 dn_q = 1.03
-target_height = delta_95*2 #Target height for data extraction
+target_height = delta_95 #Target height for data extraction
 Nn = 73
 N_0 = 0
 
