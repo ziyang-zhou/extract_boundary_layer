@@ -52,7 +52,7 @@ delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary
 mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
 nb_points = temporal.nb_points #number of points across the boundary layer
-var = 'U_n'
+var = 'U_n' #variable used for the cross correlation contour
 timestep_size = temporal.timestep_size
 
 # Set the total number of timesteps and the number of chunks
@@ -87,7 +87,7 @@ for j in range(num_chunks):
 
 		hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance
 
-	for n,i in enumerate(BL_line_prof[0].keys()):
+	for n,i in enumerate(BL_line_prof[0].keys()[1:]):
 		for m in range(len(xcoor)):  # read all spatial locations in the current timestep
 			profile_append = np.array(BL_line_prof[0][i][var][m])
 			if (m==0):
@@ -131,6 +131,7 @@ for ki in range(0,np.shape(pfluc)[2]):                                          
 		p0 = pfluc[:,l0,ki0]
 		time_cross_corr,cross_norm = analysis.get_pearson_corr(p1,p0,timestep_size)
 		c = cross_norm[(len(cross_norm)-1)//2] #obtain value at zero time delay
+		
 		#argmax:Returns the indices of the maximum values along an axis.
 		Rxt_spectrum[l,ki] = c
 
@@ -140,9 +141,39 @@ fig,ax = plt.subplots(figsize=(5,8))
 CS = ax.contourf(S, H, Rxt_spectrum,cmap='Greys')
 
 ax.set_xlim([-0.2, 0.2])
-ax.set_ylim([0, 0.4]) 
+ax.set_ylim([0, 1.0]) 
 ax.set_xlabel(r'$X/delta^{95}$', fontsize=22)
 ax.set_ylabel(r'$H/delta^{95}$', fontsize=22)
-
+interval = 20
+levels = np.linspace(-25, 25, 51)
 plt.savefig('velocity_corr_contour')
 
+#Plot the contour
+troubleshoot = False
+if troubleshoot == True:
+	levels = np.linspace(-2.5, 2.5, 21)  # 20 levels from 0 to 10
+	cmap = 'rainbow'
+	timestep_interval = 100
+	for t in range(0,np.shape(data)[0],timestep_interval):
+		print('creating contour of timestep {}'.format(t))
+		fig,ax = plt.subplots(figsize=(5,8))
+		CS = ax.contourf(S, H, data[t,:,:], levels=levels, cmap=cmap)
+		ax.set_xlim([-0.2, 0.2])
+		#ax.set_ylim([0, 1.0]) 
+		ax.set_xlabel(r'$X/delta^{95}$', fontsize=22)
+		ax.set_ylabel(r'$H/delta^{95}$', fontsize=22)
+		# Add a colorbar
+		cbar = plt.colorbar(CS, ax=ax)
+		cbar.set_label('Velocity', fontsize=18)
+		plt.savefig('velocity_corr_contour timestep {}'.format(t))
+		plt.close()
+
+	for t in range(0,np.shape(data)[0],timestep_interval):
+		fig,ax = plt.subplots(figsize=(5,8))	
+		x_index = find_nearest(scoor,0.1*delta_95)
+		plt.plot(hcoor/delta_95,data[t,:,x_index])
+		#plt.ylim((-2.5,2.5))
+		plt.savefig('fluc plot {}'.format(t))
+		plt.close()
+else:
+	None

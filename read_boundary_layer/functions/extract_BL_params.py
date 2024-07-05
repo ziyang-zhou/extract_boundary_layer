@@ -255,6 +255,8 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
         t['point2']=pt2
         t['nbpoints']=nb_points
         t['factor']=factor_spacing
+        t['mask']=False
+        t['probe_tolerance']=10
         line=t.execute()
 
       else:
@@ -264,7 +266,10 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
         t['point1']=pt1
         t['point2']=pt2
         t['nbpoints']=nb_points-1
+        t['mask']=False
+        t['probe_tolerance']=10
         line=t.execute()
+        
       if line is not None:
         line.compute('h=((x-{0:f})**2+(y-{1:f})**2+(z-{2:f})**2)**0.5'.format(pt1[0],pt1[1],pt1[2]))
         # Compute tangential velocity
