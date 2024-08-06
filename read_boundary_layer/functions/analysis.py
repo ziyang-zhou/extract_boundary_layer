@@ -189,12 +189,9 @@ def get_velocity_corr(signal_1,signal_2,height_1,height_2,dt):
         signal_2 = signal_2 - np.average(signal_2)
 
         if height_2 < height_1:
-            signal_1 = signal_1/(np.std(signal_1)*np.sqrt(len(signal_1))) #normalize velocity signal
-            signal_2 = signal_2/(np.std(signal_1)*np.sqrt(len(signal_2)))
+            cross_corr_matrix= np.cov(signal_1, signal_2, ddof=0)/(np.std(signal_1)*np.std(signal_1)) #normalize velocity signal
+            cross_corr = cross_corr_matrix[0,1]
         else:
-            signal_1 = signal_1/(np.std(signal_2)*np.sqrt(len(signal_1))) 
-            signal_2 = signal_2/(np.std(signal_2)*np.sqrt(len(signal_2)))
-
-        cross_norm = sig.correlate(signal_1, signal_2, mode='full', method='direct')
-        time_cross_corr = np.arange(-len(signal_1), len(signal_1)-1)*dt
-        return time_cross_corr,cross_norm
+            cross_corr_matrix = np.cov(signal_1, signal_2, ddof=0)/(np.std(signal_1)*np.std(signal_2))
+            cross_corr = cross_corr_matrix[0,1]
+        return cross_corr

@@ -62,7 +62,6 @@ def find_nearest_index(array, value):
 
 settings = pd.read_csv("../setting.csv", index_col= 0)
 delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary layer thickness
-filter_freq = [100,8000]
 
 mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
@@ -133,26 +132,32 @@ nbi = data.shape[0]
 meandata = data.mean(axis=0,dtype=np.float64)
 
 #Compute the arithmetic mean along the specified axis.
-datafluc = data - np.tile(meandata,(nbi,1,1))
-pfluc = datafluc
+pfluc = data - np.tile(meandata,(nbi,1,1))
 Rxt_spectrum = np.zeros((hcoor.shape[0],scoor.shape[0]))
 
 #Setting the fixed point
 l0 = find_nearest_index(hcoor,0.1*delta_95) #wall normal coordinate of fixed point
 ki0 = find_nearest_index(xcoor,-0.019227) #streamwise coordinate of fixed point
 
+#Smooth interpolated error
+for ki in range(0,np.shape(pfluc)[2]-1):
+	for t in range(0,np.shape(pfluc)[0]-1):
+		i_zero = np.where(abs(pfluc[t,:,ki]) < 0.000001)[0]
+		for i in i_zero:
+			if i+1 not in i_zero:
+				pfluc[t,i,ki] = (pfluc[t,i-1,ki] + pfluc[t,i+1,ki])/2
+			else:
+				#Obtain the next non-zero value for interpolation
+				n=0
+				while pfluc[t,i+n,ki]==0:
+					n+=1
+				pfluc[t,i,ki] = (pfluc[t,i-1,ki] + pfluc[t,i+n,ki])/2
+
 for ki in range(0,np.shape(pfluc)[2]-1):                                          #streamwise index_point
 	for l in range(0,np.shape(pfluc)[1]-1):                                       #wall normal index_point
 		p1 = pfluc[:,l,ki]
 		p0 = pfluc[:,l0,ki0]
-		#p1 = butter_bandpass_filter(p1,filter_freq[0], filter_freq[1], fs, order=2)
-		#p0 = butter_bandpass_filter(p0,filter_freq[0], filter_freq[1], fs, order=2)
-		time_cross_corr,cross_norm = analysis.get_velocity_corr(p0,p1,hcoor[l0],hcoor[l],timestep_size)
-
-		i_zero_delay = len(time_cross_corr)//2
-		c = cross_norm[i_zero_delay] #obtain value at zero time delay
-		
-		#argmax:Returns the indices of the maximum values along an axis.
+		c = analysis.get_velocity_corr(p0,p1,hcoor[l0],hcoor[l],timestep_size)
 		Rxt_spectrum[l,ki] = c
 
 print('shape of the matrix is',pfluc.shape)
@@ -180,12 +185,12 @@ if troubleshoot == True:
 	levels = np.linspace(-2.5, 2.5, 21)  # 20 levels from 0 to 10
 	cmap = 'rainbow'
 	timestep_interval = 100
-	for t in range(0,np.shape(data)[0],timestep_interval):
+	for t in range(0,np.shape(pfluc)[0],timestep_interval):
 		print('creating contour of timestep {}'.format(t))
 		fig,ax = plt.subplots(figsize=(5,8))
-		CS = ax.contourf(S, H, data[t,:,:], levels=levels, cmap=cmap)
+		CS = ax.contourf(S, H, pfluc[t,:,:], levels=levels, cmap=cmap)
 		ax.set_xlim([-0.2, 0.2])
-		#ax.set_ylim([0, 1.0]) 
+		ax.set_ylim([0, 0.5]) 
 		ax.set_xlabel(r'$X/delta^{95}$', fontsize=22)
 		ax.set_ylabel(r'$H/delta^{95}$', fontsize=22)
 		# Add a colorbar
@@ -194,11 +199,11 @@ if troubleshoot == True:
 		plt.savefig('velocity_corr_contour timestep {}'.format(t))
 		plt.close()
 
-	for t in range(0,np.shape(data)[0],timestep_interval):
+	for t in range(0,np.shape(pfluc)[0],timestep_interval):
 		fig,ax = plt.subplots(figsize=(5,8))	
 		x_index = find_nearest(scoor,0.1*delta_95)
-		plt.plot(hcoor/delta_95,data[t,:,x_index])
-		#plt.ylim((-2.5,2.5))
+		plt.plot(hcoor/delta_95,pfluc[t,:,x_index])
+		plt.ylim((-2.5,2.5))
 		plt.savefig('fluc plot {}'.format(t))
 		plt.close()
 else:
