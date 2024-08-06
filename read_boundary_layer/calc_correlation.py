@@ -1,6 +1,7 @@
 from antares import *
 from functions import analysis
-from scipy.signal import butter, lfilter
+from scipy.signal import butter, lfilter, savgol_filter
+from scipy import interpolate
 import vtk
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,6 +14,19 @@ import pdb
 # ---------------------
 # Defined functions
 # ---------------------
+
+def interpolate_zeros(array):
+    non_zero_indices = np.where(array != 0.0)[0]
+    zero_indices = np.where(array == 0.0)[0]
+
+    # Create interpolation function using cubic spline
+    interp_func = interpolate.interp1d(non_zero_indices, array[non_zero_indices], kind='cubic', fill_value="extrapolate")
+
+    # Interpolate zero values
+    interpolated_array = array.copy()
+    interpolated_array[zero_indices] = interp_func(zero_indices)
+
+    return interpolated_array
 
 def butter_bandpass(lowcut, highcut, fs, order=5):
     nyq = 0.5 * fs
@@ -48,12 +62,14 @@ def find_nearest_index(array, value):
 
 settings = pd.read_csv("../setting.csv", index_col= 0)
 delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary layer thickness
+filter_freq = [100,8000]
 
 mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
 nb_points = temporal.nb_points #number of points across the boundary layer
 var = 'U_n' #variable used for the cross correlation contour
 timestep_size = temporal.timestep_size
+fs = 1/timestep_size
 
 # Set the total number of timesteps and the number of chunks
 step_per_chunk = temporal.step_per_chunk
@@ -73,7 +89,7 @@ print('shape of BL line geom',BL_line_geom[0][0]['x'].shape)
 for j in range(num_chunks):
 	#Read the boundary layer history at x_loc
 	r = Reader('hdf_antares')
-	r['filename'] = 'BL_line_prof/BL_line_prof_{}_{}.h5'.format(starting_timestep+j*step_per_chunk,starting_timestep+(j+1)*(step_per_chunk))
+	r['filename'] = bl_read_path + 'BL_line_prof_{}_{}.h5'.format(starting_timestep+j*step_per_chunk,starting_timestep+(j+1)*(step_per_chunk))
 	BL_line_prof = r.read()
   
 	if j == 0:
@@ -125,23 +141,33 @@ Rxt_spectrum = np.zeros((hcoor.shape[0],scoor.shape[0]))
 l0 = find_nearest_index(hcoor,0.1*delta_95) #wall normal coordinate of fixed point
 ki0 = find_nearest_index(xcoor,-0.019227) #streamwise coordinate of fixed point
 
-for ki in range(0,np.shape(pfluc)[2]):                                          #streamwise index_point
-	for l in range(0,np.shape(pfluc)[1]):                                       #wall normal index_point
+for ki in range(0,np.shape(pfluc)[2]-1):                                          #streamwise index_point
+	for l in range(0,np.shape(pfluc)[1]-1):                                       #wall normal index_point
 		p1 = pfluc[:,l,ki]
 		p0 = pfluc[:,l0,ki0]
-		time_cross_corr,cross_norm = analysis.get_pearson_corr(p1,p0,timestep_size)
-		c = cross_norm[(len(cross_norm)-1)//2] #obtain value at zero time delay
+		#p1 = butter_bandpass_filter(p1,filter_freq[0], filter_freq[1], fs, order=2)
+		#p0 = butter_bandpass_filter(p0,filter_freq[0], filter_freq[1], fs, order=2)
+		time_cross_corr,cross_norm = analysis.get_velocity_corr(p0,p1,hcoor[l0],hcoor[l],timestep_size)
+
+		i_zero_delay = len(time_cross_corr)//2
+		c = cross_norm[i_zero_delay] #obtain value at zero time delay
 		
 		#argmax:Returns the indices of the maximum values along an axis.
 		Rxt_spectrum[l,ki] = c
 
+print('shape of the matrix is',pfluc.shape)
+print('format is (time,wall normal,streamwise)')
+
 S,H =np.meshgrid((scoor-scoor[ki0])/delta_95,hcoor/delta_95)
 fig,ax = plt.subplots(figsize=(5,8))
 
-CS = ax.contourf(S, H, Rxt_spectrum,cmap='Greys')
+# Contour plot with black lines
+levels = np.linspace(0.1, 1.0, 9)
+CS = ax.contour(S, H, Rxt_spectrum, levels=levels, colors='black')
+plt.clabel(CS, fmt='%1.1f', inline=True, fontsize=10)
 
-ax.set_xlim([-0.2, 0.2])
-ax.set_ylim([0, 1.0]) 
+ax.set_xlim([-0.15, 0.15])
+ax.set_ylim([0, 0.4]) 
 ax.set_xlabel(r'$X/delta^{95}$', fontsize=22)
 ax.set_ylabel(r'$H/delta^{95}$', fontsize=22)
 interval = 20
@@ -149,7 +175,7 @@ levels = np.linspace(-25, 25, 51)
 plt.savefig('velocity_corr_contour')
 
 #Plot the contour
-troubleshoot = False
+troubleshoot = True
 if troubleshoot == True:
 	levels = np.linspace(-2.5, 2.5, 21)  # 20 levels from 0 to 10
 	cmap = 'rainbow'

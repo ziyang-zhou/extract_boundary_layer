@@ -181,3 +181,20 @@ def get_pearson_corr(signal_1,signal_2,dt):
 	cross_norm = sig.correlate(signal_1, signal_2, mode='full', method='direct')
 	time_cross_corr = np.arange(-len(signal_1), len(signal_1)-1)*dt
 	return time_cross_corr,cross_norm
+
+def get_velocity_corr(signal_1,signal_2,height_1,height_2,dt):
+        #Ensure that signal_1 belongs to the fixed point
+        #takes in two signals (input as fluctuations about the mean) and outputs the cross-correlation with time lag
+        signal_1 = signal_1 - np.average(signal_1)
+        signal_2 = signal_2 - np.average(signal_2)
+
+        if height_2 < height_1:
+            signal_1 = signal_1/(np.std(signal_1)*np.sqrt(len(signal_1))) #normalize velocity signal
+            signal_2 = signal_2/(np.std(signal_1)*np.sqrt(len(signal_2)))
+        else:
+            signal_1 = signal_1/(np.std(signal_2)*np.sqrt(len(signal_1))) 
+            signal_2 = signal_2/(np.std(signal_2)*np.sqrt(len(signal_2)))
+
+        cross_norm = sig.correlate(signal_1, signal_2, mode='full', method='direct')
+        time_cross_corr = np.arange(-len(signal_1), len(signal_1)-1)*dt
+        return time_cross_corr,cross_norm
