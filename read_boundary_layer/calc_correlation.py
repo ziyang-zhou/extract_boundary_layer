@@ -154,7 +154,7 @@ ax.set_xlabel(r'$X/delta^{95}$', fontsize=22)
 ax.set_ylabel(r'$H/delta^{95}$', fontsize=22)
 interval = 20
 levels = np.linspace(-25, 25, 51)
-plt.savefig('velocity_corr_contour')
+plt.savefig(temporal.project_path + 'velocity_corr_contour')
 
 #Calculate integral length scale 22+
 h_start = 0.0*delta_95 #start location of the fixed point
@@ -165,7 +165,7 @@ h_mask_integrate_range = (hcoor > h_start)
 if if_integrate == True:
 	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end)
 	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
-	L_22_df.to_csv('L22+',index=False)
+	L_22_df.to_csv(temporal.project_path + 'L22+',index=False)
 
 #Plot the contour
 
@@ -185,7 +185,7 @@ if troubleshoot == True:
 		# Add a colorbar
 		cbar = plt.colorbar(CS, ax=ax)
 		cbar.set_label('Velocity', fontsize=18)
-		plt.savefig('velocity_corr_contour timestep {}'.format(t))
+		plt.savefig(temporal.project_path + 'velocity_corr_contour timestep {}'.format(t))
 		plt.close()
 
 	for t in range(0,np.shape(pfluc)[0],timestep_interval):
@@ -193,7 +193,7 @@ if troubleshoot == True:
 		x_index = analysis.find_nearest(scoor,0.1*delta_95)
 		plt.plot(hcoor/delta_95,pfluc[t,:,x_index])
 		plt.ylim((-2.5,2.5))
-		plt.savefig('fluc plot {}'.format(t))
+		plt.savefig(temporal.project_path + 'fluc plot {}'.format(t))
 		plt.close()
 else:
 	None
