@@ -15,19 +15,6 @@ import pdb
 # Defined functions
 # ---------------------
 
-def interpolate_zeros(array):
-    non_zero_indices = np.where(array != 0.0)[0]
-    zero_indices = np.where(array == 0.0)[0]
-
-    # Create interpolation function using cubic spline
-    interp_func = interpolate.interp1d(non_zero_indices, array[non_zero_indices], kind='cubic', fill_value="extrapolate")
-
-    # Interpolate zero values
-    interpolated_array = array.copy()
-    interpolated_array[zero_indices] = interp_func(zero_indices)
-
-    return interpolated_array
-
 def butter_bandpass(lowcut, highcut, fs, order=5):
     nyq = 0.5 * fs
     low = lowcut / nyq
@@ -39,23 +26,6 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
     y = lfilter(b, a, data)
     return y
-
-def find_nearest(array, value):
-    array = np.asarray(array)
-    idx = (np.abs(array - value)).argmin()
-    return idx
-
-def mov_avg(X,k):
-    X_new = X
-    for i in range(k//2,X_new.size-k//2):
-        X_new[i] = sum(X[i-k//2:i+k//2])/k
-    return X_new
-
-def find_nearest_index(array, value):
-    array = np.asarray(array)
-    idx = (np.abs(array - value)).argmin()
-    return idx
-
 # ------------------
 # Reading the files
 # ------------------
@@ -136,8 +106,8 @@ nbi = data.shape[0]
 meandata = data.mean(axis=0,dtype=np.float64)
 
 #Setting the fixed point
-l0 = find_nearest_index(hcoor,0.1*delta_95) #wall normal coordinate of fixed point
-ki0 = find_nearest_index(xcoor,xcoor0) #streamwise coordinate of fixed point
+l0 = analysis.find_nearest_index(hcoor,0.1*delta_95) #wall normal coordinate of fixed point
+ki0 = analysis.find_nearest_index(xcoor,xcoor0) #streamwise coordinate of fixed point
 h_mask_delta_95 = (hcoor < delta_95) #Mask to scope out the boundary layer
 
 #Compute the arithmetic mean along the specified axis.
@@ -159,6 +129,7 @@ if if_interpolate == True:
 						n+=1
 					pfluc[t,i,ki] = (pfluc[t,i-1,ki] + pfluc[t,i+n,ki])/2
 
+#Calculate the cross correlation contour
 for ki in range(0,np.shape(pfluc)[2]-1):                                          #streamwise index_point
 	for l in range(0,np.shape(pfluc)[1]-1):                                       #wall normal index_point
 		p1 = pfluc[:,l,ki]
@@ -192,24 +163,8 @@ h_mask_plot_range = ((hcoor < h_end) & (hcoor > h_start))
 h_mask_integrate_range = (hcoor > h_start)
 
 if if_integrate == True:
-	L_22 = np.zeros(len(hcoor[h_mask_plot_range]))
-	for l0,h0 in enumerate(hcoor[h_mask_plot_range]):
-		Rxt_spectrum_aux = [] #Declare an array for storing cross corr. on integration axis
-		h_aux = []
-		#Recompute the cross correlation array
-		for l,h_i in enumerate(hcoor[h_mask_integrate_range][l0:]): #moving point
-			threshold = 0.05 #Integration limit defined in Jaiswal 2020
-			p1 = pfluc[:,h_mask_integrate_range,:][:,l+l0,ki0]
-			p0 = pfluc[:,h_mask_plot_range,:][:,l0,ki0]
-			c = analysis.get_velocity_corr(p0,p1,h0,h_i)
-			if c > threshold:
-				Rxt_spectrum_aux.append(c)
-				h_aux.append(h_i)
-			else:
-				break
-			L_22[l0] = np.trapz(np.array(Rxt_spectrum_aux),np.array(h_aux-h_aux[0]))
-			
-	L_22_df = pd.DataFrame({'wall distance': hcoor[h_mask_plot_range], 'L22+':L_22})
+	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end)
+	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
 	L_22_df.to_csv('L22+',index=False)
 
 #Plot the contour
@@ -235,7 +190,7 @@ if troubleshoot == True:
 
 	for t in range(0,np.shape(pfluc)[0],timestep_interval):
 		fig,ax = plt.subplots(figsize=(5,8))	
-		x_index = find_nearest(scoor,0.1*delta_95)
+		x_index = analysis.find_nearest(scoor,0.1*delta_95)
 		plt.plot(hcoor/delta_95,pfluc[t,:,x_index])
 		plt.ylim((-2.5,2.5))
 		plt.savefig('fluc plot {}'.format(t))

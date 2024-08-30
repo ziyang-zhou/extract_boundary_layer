@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import scipy.signal as sig
 import scipy.optimize as opt
 from scipy.integrate import quad
+from scipy import interpolate, integrate
 from functions import extract_BL_params
 import math
 import os
@@ -195,3 +196,90 @@ def get_velocity_corr(signal_1,signal_2,height_1,height_2):
             cross_corr_matrix = np.cov(signal_1, signal_2, ddof=0)/(np.std(signal_1)*np.std(signal_2))
             cross_corr = cross_corr_matrix[0,1]
         return cross_corr
+
+###############################################PROCESSING CONTOUR DATA#################################################################
+#Obtain the length scale of vertical velocity fluc L22 given the 2D array representing the cross correlation contour
+def get_length_scale(pfluc,x,y,x0,y0,x1,y1,threshold = 0.05,axis = 'column'):
+	'''
+	Input
+	pfluc: array - 3D array of the time history of data on a plane. 
+	x: array - 1D array of horizontal axis
+	y: array - 1D array of vertical axis
+	x0,y0,x1,y1 : float - x0,y0 is the location of the start of plot range and x1,y1 is the location of the end of plot range
+	threshold : float - limit of cross correlation to consider for integration (Default is 0.05)
+	axis: str - axis along which to calculate the integral length scale. 'column' or 'row'
+	
+	Return
+	L_scale: array - Computed length scale for each spatial location along the chosen axis
+	scale: array - spatial axis along which length scale is computed
+	'''
+
+	if axis == 'column':
+		ki0 = find_nearest(x,x0) #Find the x coordinate index of the origin
+		mask_plot_range = (y > y0) & (y < y1)
+		L_scale = np.zeros(len(y[mask_plot_range]))
+		for i, y0_i in enumerate(y[mask_plot_range]): #Loop through the fixed point
+			mask_integrate_range = (y > y0_i) #Define the integration range for each point to be plotted
+			Rxt_spectrum_aux = [] #Declare an array for storing cross corr. on integration axis
+			loc_array = []
+			#Recompute the cross correlation array
+			for j,y_i in enumerate(y[mask_integrate_range][l0:]): #moving point
+				p1 = pfluc[:,mask_integrate_range,:][:,i+j,ki0]
+				p0 = pfluc[:,mask_plot_range,:][:,i,ki0]
+				c = get_velocity_corr(p0,p1,y0_i,y_i)
+				if c > threshold:
+					Rxt_spectrum_aux.append(c)
+					loc_array.append(y_i)
+				else:
+					break
+			L_scale[i] = np.trapz(np.array(Rxt_spectrum_aux),np.array(loc_array-loc_array[0]))
+			scale = y[mask_plot_range]
+		return L_scale, scale
+	
+	elif axis == 'row':
+		ki0 = find_nearest(x,x0) #Find the x coordinate index of the origin
+		mask_plot_range = (y > y0) & (y < y1)
+		L_scale = np.zeros(len(y[mask_plot_range]))
+		for i, y0_i in enumerate(y[mask_plot_range]): #Loop through the fixed point
+			mask_integrate_range = (x > x0) #Define the integration range for each point to be plotted
+			Rxt_spectrum_aux = [] #Declare an array for storing cross corr. on integration axis
+			loc_array = []
+			#Recompute the cross correlation array
+			for j,x_i in enumerate(x[mask_integrate_range][ki0:]): #moving point
+				p1 = pfluc[:,mask_plot_range,mask_integrate_range][:,i,j]
+				p0 = pfluc[:,mask_plot_range,:][:,i,ki0]
+				c = get_velocity_corr(p0,p1,y0_i,y0_i)
+				if c > threshold:
+					Rxt_spectrum_aux.append(c)
+					loc_array.append(x_i)
+				else:
+					break
+			L_scale[i] = np.trapz(np.array(Rxt_spectrum_aux),np.array(loc_array-loc_array[0]))
+			scale = y[mask_plot_range]
+		return L_scale, scale
+	else :
+		print('Invalid choice of axis for length scale calculation')
+
+def interpolate_zeros(array):
+    non_zero_indices = np.where(array != 0.0)[0]
+    zero_indices = np.where(array == 0.0)[0]
+
+    # Create interpolation function using cubic spline
+    interp_func = interpolate.interp1d(non_zero_indices, array[non_zero_indices], kind='cubic', fill_value="extrapolate")
+
+    # Interpolate zero values
+    interpolated_array = array.copy()
+    interpolated_array[zero_indices] = interp_func(zero_indices)
+
+    return interpolated_array
+
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return idx
+
+def mov_avg(X,k):
+    X_new = X
+    for i in range(k//2,X_new.size-k//2):
+        X_new[i] = sum(X[i-k//2:i+k//2])/k
+    return X_new
