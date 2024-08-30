@@ -106,8 +106,8 @@ nbi = data.shape[0]
 meandata = data.mean(axis=0,dtype=np.float64)
 
 #Setting the fixed point
-l0 = analysis.find_nearest_index(hcoor,0.1*delta_95) #wall normal coordinate of fixed point
-ki0 = analysis.find_nearest_index(xcoor,xcoor0) #streamwise coordinate of fixed point
+l0 = analysis.find_nearest(hcoor,0.1*delta_95) #wall normal coordinate of fixed point
+ki0 = analysis.find_nearest(xcoor,xcoor0) #streamwise coordinate of fixed point
 h_mask_delta_95 = (hcoor < delta_95) #Mask to scope out the boundary layer
 
 #Compute the arithmetic mean along the specified axis.
