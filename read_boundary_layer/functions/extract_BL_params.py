@@ -256,7 +256,7 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
         t['nbpoints']=nb_points
         t['factor']=factor_spacing
         t['mask']=False
-        t['probe_tolerance']=10
+        t['probe_tolerance']=14
         line=t.execute()
 
       else:
@@ -267,7 +267,7 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
         t['point2']=pt2
         t['nbpoints']=nb_points-1
         t['mask']=False
-        t['probe_tolerance']=10
+        t['probe_tolerance']=14
         line=t.execute()
         
       if line is not None:

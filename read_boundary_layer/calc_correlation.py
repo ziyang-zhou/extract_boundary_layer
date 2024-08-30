@@ -1,7 +1,7 @@
 from antares import *
 from functions import analysis
 from scipy.signal import butter, lfilter, savgol_filter
-from scipy import interpolate
+from scipy import interpolate, integrate
 import vtk
 import matplotlib.pyplot as plt
 import numpy as np
@@ -69,6 +69,7 @@ nb_points = temporal.nb_points #number of points across the boundary layer
 var = 'U_n' #variable used for the cross correlation contour
 timestep_size = temporal.timestep_size
 fs = 1/timestep_size
+xcoor0 = -0.019227 # x location of the integration axis
 
 # Set the total number of timesteps and the number of chunks
 step_per_chunk = temporal.step_per_chunk
@@ -76,6 +77,9 @@ total_timesteps = temporal.total_timesteps
 starting_timestep = temporal.starting_timestep
 num_chunks = (total_timesteps - starting_timestep) // step_per_chunk
 
+if_interpolate = True # Set as true if interpolation is needed to remove zeros in the contour
+if_integrate = True # Set as true if the integral is to be calculated
+troubleshoot = True # Set as true if velocity contours are to be plotted
 
 #Read the mesh
 r=Reader('hdf_antares')
@@ -100,7 +104,7 @@ for j in range(num_chunks):
 		sprof[1:] = np.cumsum(ds)
 		scoor = sprof
 
-		hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance
+		hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance 
 
 	for n,i in enumerate(BL_line_prof[0].keys()[1:]):
 		for m in range(len(xcoor)):  # read all spatial locations in the current timestep
@@ -131,38 +135,41 @@ for j in range(num_chunks):
 nbi = data.shape[0]
 meandata = data.mean(axis=0,dtype=np.float64)
 
+#Setting the fixed point
+l0 = find_nearest_index(hcoor,0.1*delta_95) #wall normal coordinate of fixed point
+ki0 = find_nearest_index(xcoor,xcoor0) #streamwise coordinate of fixed point
+h_mask_delta_95 = (hcoor < delta_95) #Mask to scope out the boundary layer
+
 #Compute the arithmetic mean along the specified axis.
 pfluc = data - np.tile(meandata,(nbi,1,1))
 Rxt_spectrum = np.zeros((hcoor.shape[0],scoor.shape[0]))
 
-#Setting the fixed point
-l0 = find_nearest_index(hcoor,0.1*delta_95) #wall normal coordinate of fixed point
-ki0 = find_nearest_index(xcoor,-0.019227) #streamwise coordinate of fixed point
-
 #Smooth interpolated error
-for ki in range(0,np.shape(pfluc)[2]-1):
-	for t in range(0,np.shape(pfluc)[0]-1):
-		i_zero = np.where(abs(pfluc[t,:,ki]) < 0.000001)[0]
-		for i in i_zero:
-			if i+1 not in i_zero:
-				pfluc[t,i,ki] = (pfluc[t,i-1,ki] + pfluc[t,i+1,ki])/2
-			else:
-				#Obtain the next non-zero value for interpolation
-				n=0
-				while pfluc[t,i+n,ki]==0:
-					n+=1
-				pfluc[t,i,ki] = (pfluc[t,i-1,ki] + pfluc[t,i+n,ki])/2
+if if_interpolate == True:
+	for ki in range(0,np.shape(pfluc)[2]-1):
+		for t in range(0,np.shape(pfluc)[0]-1):
+			i_zero = np.where(abs(pfluc[t,:,ki]) == 0)[0]
+			for i in i_zero:
+				if i+1 not in i_zero:
+					pfluc[t,i,ki] = (pfluc[t,i-1,ki] + pfluc[t,i+1,ki])/2
+				else:
+					#Obtain the next non-zero value for interpolation
+					n=0
+					while (pfluc[t,i+n,ki]==0):
+						n+=1
+					pfluc[t,i,ki] = (pfluc[t,i-1,ki] + pfluc[t,i+n,ki])/2
 
 for ki in range(0,np.shape(pfluc)[2]-1):                                          #streamwise index_point
 	for l in range(0,np.shape(pfluc)[1]-1):                                       #wall normal index_point
 		p1 = pfluc[:,l,ki]
 		p0 = pfluc[:,l0,ki0]
-		c = analysis.get_velocity_corr(p0,p1,hcoor[l0],hcoor[l],timestep_size)
+		c = analysis.get_velocity_corr(p0,p1,hcoor[l0],hcoor[l])
 		Rxt_spectrum[l,ki] = c
 
 print('shape of the matrix is',pfluc.shape)
 print('format is (time,wall normal,streamwise)')
 
+#Define the limits of the plot
 S,H =np.meshgrid((scoor-scoor[ki0])/delta_95,hcoor/delta_95)
 fig,ax = plt.subplots(figsize=(5,8))
 
@@ -170,7 +177,6 @@ fig,ax = plt.subplots(figsize=(5,8))
 levels = np.linspace(0.1, 1.0, 9)
 CS = ax.contour(S, H, Rxt_spectrum, levels=levels, colors='black')
 plt.clabel(CS, fmt='%1.1f', inline=True, fontsize=10)
-
 ax.set_xlim([-0.15, 0.15])
 ax.set_ylim([0, 0.4]) 
 ax.set_xlabel(r'$X/delta^{95}$', fontsize=22)
@@ -179,8 +185,35 @@ interval = 20
 levels = np.linspace(-25, 25, 51)
 plt.savefig('velocity_corr_contour')
 
+#Calculate integral length scale 22+
+h_start = 0.0*delta_95 #start location of the fixed point
+h_end = 1.0*delta_95 #end location of the fixed point
+h_mask_plot_range = ((hcoor < h_end) & (hcoor > h_start))
+h_mask_integrate_range = (hcoor > h_start)
+
+if if_integrate == True:
+	L_22 = np.zeros(len(hcoor[h_mask_plot_range]))
+	for l0,h0 in enumerate(hcoor[h_mask_plot_range]):
+		Rxt_spectrum_aux = [] #Declare an array for storing cross corr. on integration axis
+		h_aux = []
+		#Recompute the cross correlation array
+		for l,h_i in enumerate(hcoor[h_mask_integrate_range][l0:]): #moving point
+			threshold = 0.05 #Integration limit defined in Jaiswal 2020
+			p1 = pfluc[:,h_mask_integrate_range,:][:,l+l0,ki0]
+			p0 = pfluc[:,h_mask_plot_range,:][:,l0,ki0]
+			c = analysis.get_velocity_corr(p0,p1,h0,h_i)
+			if c > threshold:
+				Rxt_spectrum_aux.append(c)
+				h_aux.append(h_i)
+			else:
+				break
+			L_22[l0] = np.trapz(np.array(Rxt_spectrum_aux),np.array(h_aux-h_aux[0]))
+			
+	L_22_df = pd.DataFrame({'wall distance': hcoor[h_mask_plot_range], 'L22+':L_22})
+	L_22_df.to_csv('L22+',index=False)
+
 #Plot the contour
-troubleshoot = True
+
 if troubleshoot == True:
 	levels = np.linspace(-2.5, 2.5, 21)  # 20 levels from 0 to 10
 	cmap = 'rainbow'
@@ -188,6 +221,7 @@ if troubleshoot == True:
 	for t in range(0,np.shape(pfluc)[0],timestep_interval):
 		print('creating contour of timestep {}'.format(t))
 		fig,ax = plt.subplots(figsize=(5,8))
+		
 		CS = ax.contourf(S, H, pfluc[t,:,:], levels=levels, cmap=cmap)
 		ax.set_xlim([-0.2, 0.2])
 		ax.set_ylim([0, 0.5]) 
