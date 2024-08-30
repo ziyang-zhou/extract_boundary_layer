@@ -223,7 +223,7 @@ def get_length_scale(pfluc,x,y,x0,y0,x1,y1,threshold = 0.05,axis = 'column'):
 			Rxt_spectrum_aux = [] #Declare an array for storing cross corr. on integration axis
 			loc_array = []
 			#Recompute the cross correlation array
-			for j,y_i in enumerate(y[mask_integrate_range][l0:]): #moving point
+			for j,y_i in enumerate(y[mask_integrate_range][y0_i:]): #moving point
 				p1 = pfluc[:,mask_integrate_range,:][:,i+j,ki0]
 				p0 = pfluc[:,mask_plot_range,:][:,i,ki0]
 				c = get_velocity_corr(p0,p1,y0_i,y_i)
