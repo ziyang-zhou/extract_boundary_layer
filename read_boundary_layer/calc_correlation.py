@@ -50,7 +50,7 @@ if_interpolate = temporal.if_interpolate # Set as true if interpolation is neede
 if_integrate = temporal.if_interpolate # Set as true if the integral is to be calculated
 troubleshoot = temporal.if_interpolate # Set as true if velocity contours are to be plotted
 integration_axis = temporal.if_interpolate
-xcoor0 = eval(temporal.if_interpolate) # x location of the integration axis
+xcoor0 = temporal.if_interpolate # x location of the integration axis
 
 #Read the mesh
 r=Reader('hdf_antares')
