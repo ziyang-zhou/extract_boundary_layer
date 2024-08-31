@@ -50,6 +50,7 @@ num_chunks = (total_timesteps - starting_timestep) // step_per_chunk
 if_interpolate = True # Set as true if interpolation is needed to remove zeros in the contour
 if_integrate = True # Set as true if the integral is to be calculated
 troubleshoot = True # Set as true if velocity contours are to be plotted
+integration_axis = 'row'
 
 #Read the mesh
 r=Reader('hdf_antares')
@@ -163,7 +164,7 @@ h_mask_plot_range = ((hcoor < h_end) & (hcoor > h_start))
 h_mask_integrate_range = (hcoor > h_start)
 
 if if_integrate == True:
-	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end)
+	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,set_axis)
 	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
 	L_22_df.to_csv(temporal.project_path + 'L22+',index=False)
 

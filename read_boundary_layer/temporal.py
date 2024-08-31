@@ -14,9 +14,9 @@ project_path = '/scratch/m/moreaust/zzhou/Reference_DNS/'
 #mesh path set to SLR case temporarily because the mesh in this case folder is being converted for LSB zoom
 
 #Extraction parameter
-length_extraction = 0.00678
+length_extraction = 0.01
 var_detection = 'U_t'
-nb_points = 500 #no. of wall normal discr points
+nb_points = 150 #no. of wall normal discr points
 axis = 'x'
 axis_direction = 0
 relative_velocity_vec = ['x_velocity', 'y_velocity', 'z_velocity']
