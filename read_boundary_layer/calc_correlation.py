@@ -36,10 +36,9 @@ delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary
 mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
 nb_points = temporal.nb_points #number of points across the boundary layer
-var = 'U_n' #variable used for the cross correlation contour
+var = temporal.var
 timestep_size = temporal.timestep_size
 fs = 1/timestep_size
-xcoor0 = -0.019227 # x location of the integration axis
 
 # Set the total number of timesteps and the number of chunks
 step_per_chunk = temporal.step_per_chunk
@@ -47,10 +46,11 @@ total_timesteps = temporal.total_timesteps
 starting_timestep = temporal.starting_timestep
 num_chunks = (total_timesteps - starting_timestep) // step_per_chunk
 
-if_interpolate = True # Set as true if interpolation is needed to remove zeros in the contour
-if_integrate = True # Set as true if the integral is to be calculated
-troubleshoot = True # Set as true if velocity contours are to be plotted
-integration_axis = 'row'
+if_interpolate = temporal.if_interpolate # Set as true if interpolation is needed to remove zeros in the contour
+if_integrate = temporal.if_interpolate # Set as true if the integral is to be calculated
+troubleshoot = temporal.if_interpolate # Set as true if velocity contours are to be plotted
+integration_axis = temporal.if_interpolate
+xcoor0 = eval(temporal.if_interpolate) # x location of the integration axis
 
 #Read the mesh
 r=Reader('hdf_antares')
@@ -164,9 +164,9 @@ h_mask_plot_range = ((hcoor < h_end) & (hcoor > h_start))
 h_mask_integrate_range = (hcoor > h_start)
 
 if if_integrate == True:
-	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,set_axis)
+	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,integration_axis)
 	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
-	L_22_df.to_csv(temporal.project_path + 'L22+',index=False)
+	L_22_df.to_csv(temporal.project_path + 'L22+_{}'.format(integration_axis),index=False)
 
 #Plot the contour
 
