@@ -47,10 +47,10 @@ starting_timestep = temporal.starting_timestep
 num_chunks = (total_timesteps - starting_timestep) // step_per_chunk
 
 if_interpolate = temporal.if_interpolate # Set as true if interpolation is needed to remove zeros in the contour
-if_integrate = temporal.if_interpolate # Set as true if the integral is to be calculated
-troubleshoot = temporal.if_interpolate # Set as true if velocity contours are to be plotted
-integration_axis = temporal.if_interpolate
-xcoor0 = temporal.if_interpolate # x location of the integration axis
+if_integrate = temporal.if_integrate # Set as true if the integral is to be calculated
+troubleshoot = temporal.troubleshoot # Set as true if velocity contours are to be plotted
+integration_axis = temporal.integration_axis
+xcoor0 = eval(temporal.xcoor0) # x location of the integration axis
 
 #Read the mesh
 r=Reader('hdf_antares')
