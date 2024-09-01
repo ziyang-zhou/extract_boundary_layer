@@ -189,7 +189,7 @@ def get_velocity_corr(signal_1,signal_2,height_1,height_2):
         signal_1 = signal_1 - np.average(signal_1)
         signal_2 = signal_2 - np.average(signal_2)
 
-        if height_2 < height_1:
+        if height_2 <= height_1:
             cross_corr_matrix= np.cov(signal_1, signal_2, ddof=0)/(np.std(signal_1)*np.std(signal_1)) #normalize velocity signal
             cross_corr = cross_corr_matrix[0,1]
         else:
@@ -224,7 +224,7 @@ def get_length_scale(pfluc,x,y,x0,y0,x1,y1,threshold = 0.05,axis = 'column'):
 			loc_array = []
 			#Recompute the cross correlation array
 			for j,y_i in enumerate(y[mask_integrate_range][i:]): #moving point
-				p1 = pfluc[:,mask_integrate_range,:][:,i+j,ki0]
+				p1 = pfluc[:,mask_integrate_range,:][:,j,ki0]
 				p0 = pfluc[:,mask_plot_range,:][:,i,ki0]
 				c = get_velocity_corr(p0,p1,y0_i,y_i)
 				if c > threshold:
