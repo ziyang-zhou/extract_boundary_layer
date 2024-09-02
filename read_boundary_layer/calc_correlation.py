@@ -1,3 +1,4 @@
+# This script takes in the boundary layer profile output outputs the integral length scale of wall normal velocity fluctuation 
 from antares import *
 from functions import analysis
 from scipy.signal import butter, lfilter, savgol_filter

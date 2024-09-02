@@ -201,6 +201,7 @@ def get_velocity_corr(signal_1,signal_2,height_1,height_2):
 #Obtain the length scale of vertical velocity fluc L22 given the 2D array representing the cross correlation contour
 def get_length_scale(pfluc,x,y,x0,y0,x1,y1,threshold = 0.05,axis = 'column'):
 	'''
+    Computes the integral length scale along a line
 	Input
 	pfluc: array - 3D array of the time history of data on a plane. 
 	x: array - 1D array of horizontal axis
@@ -249,7 +250,7 @@ def get_length_scale(pfluc,x,y,x0,y0,x1,y1,threshold = 0.05,axis = 'column'):
 				p1 = pfluc[:,mask_plot_range,:][:,i,ki0+j]
 				p0 = pfluc[:,mask_plot_range,:][:,i,ki0]
 				c = get_velocity_corr(p0,p1,y0_i,y0_i)
-				if c > threshold:
+				if c > threshold and (j != len(x[mask_integrate_range])-1):
 					Rxt_spectrum_aux.append(c)
 					loc_array.append(x_i)
 				else:
