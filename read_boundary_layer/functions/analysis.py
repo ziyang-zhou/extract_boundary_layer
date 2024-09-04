@@ -228,7 +228,7 @@ def get_length_scale(pfluc,x,y,x0,y0,x1,y1,threshold = 0.05,axis = 'column'):
 				p1 = pfluc[:,mask_integrate_range,:][:,j,ki0]
 				p0 = pfluc[:,mask_plot_range,:][:,i,ki0]
 				c = get_velocity_corr(p0,p1,y0_i,y_i)
-				if c > threshold:
+				if (c > threshold) & (j != len(y[mask_integrate_range])-1):
 					Rxt_spectrum_aux.append(c)
 					loc_array.append(y_i)
 				else:
