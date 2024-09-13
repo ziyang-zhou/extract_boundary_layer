@@ -1,4 +1,4 @@
-# This script takes in u_rms and v_rms and L22 and L21 and plots them on a graph at a given probe location
+# This script reads u_rms and v_rms and L22 and L21 and plots them on a graph at a given probe location in the wall normal direction.
 from antares import *
 from functions import analysis
 import vtk
@@ -42,5 +42,7 @@ r['filename'] = bl_path + 'U_t_rms.h5'
 base_ut=r.read()
 U_t_rms = base_ut[0][0]['u_rms']
 
-plt.plot(L22/L21,U_n_rms[:,x_index]/U_t_rms[:,x_index])
+keep_h = ((base_ut[0][0]['h_coord'][:,0] <= L22['wall distance'].iloc[-1]) & (base_ut[0][0]['h_coord'][:,0] >= L22['wall distance'].iloc[0]))
+
+plt.plot(np.array(L22['L22+'])/np.array(L21['L22+']),U_n_rms[keep_h,x_index]/U_t_rms[keep_h,x_index])
 plt.show()
