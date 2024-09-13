@@ -15,9 +15,11 @@ import pdb
 project_path = temporal.project_path
 bl_path = temporal.bl_path
 mesh_path = temporal.mesh_path
+settings = pd.read_csv("../setting.csv", index_col= 0)
 
 # Get the probe location and its equivalent index in the xcoor array.
 xcoor0 = temporal.xcoor0 # x location of the selected axis of the plot
+delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary layer thickness
 
 #Read the geometry of the mesh
 r=Reader('hdf_antares')
@@ -43,6 +45,22 @@ base_ut=r.read()
 U_t_rms = base_ut[0][0]['u_rms']
 
 keep_h = ((base_ut[0][0]['h_coord'][:,0] <= L22['wall distance'].iloc[-1]) & (base_ut[0][0]['h_coord'][:,0] >= L22['wall distance'].iloc[0]))
+hcoor = np.array(L22['wall distance'])
 
-plt.plot(np.array(L22['L22+'])/np.array(L21['L22+']),U_n_rms[keep_h,x_index]/U_t_rms[keep_h,x_index])
-plt.show()
+plt.plot(hcoor/delta_95,np.array(L22['L22+']),label='L22')
+plt.plot(hcoor/delta_95,np.array(L21['L22+']),label='L21')
+plt.legend()
+plt.savefig(temporal.project_path + 'L22_L21')
+plt.close()
+
+plt.plot(hcoor/delta_95,U_n_rms[keep_h,x_index],label='un_rms')
+plt.plot(hcoor/delta_95,U_t_rms[keep_h,x_index],label='ut_rms')
+plt.legend()
+plt.savefig(temporal.project_path + 'un_rms_ut_rms')
+plt.close()
+
+plt.plot(hcoor/delta_95,np.array(L22['L22+'])/np.array(L21['L22+']),label='L22/L21')
+plt.plot(hcoor/delta_95,U_n_rms[keep_h,x_index]/U_t_rms[keep_h,x_index],label='un/ut rms')
+plt.legend()
+plt.savefig(temporal.project_path + 'L ratio to u rms ratio')
+plt.close()
