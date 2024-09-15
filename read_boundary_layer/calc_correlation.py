@@ -77,6 +77,11 @@ for j in range(num_chunks):
 
 		hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance 
 
+#Concatenation of pfluc data array
+pfluc_path = bl_read_path + 'pfluc.npy'
+if os.path.isfile(pfluc_path):
+	data = np.load(pfluc_path)
+else:
 	for n,i in enumerate(BL_line_prof[0].keys()[1:]):
 		for m in range(len(xcoor)):  # read all spatial locations in the current timestep
 			profile_append = np.array(BL_line_prof[0][i][var][m])
@@ -94,7 +99,8 @@ for j in range(num_chunks):
 			data = np.concatenate((data[np.newaxis,:,:], data_append[np.newaxis,:,:]), axis=0)
 		else:
 			data = np.concatenate((data, data_append[np.newaxis,:,:]), axis=0)
-
+	np.save(pfluc_path, data)
+	
 	print('data shape is {}'.format(np.shape(data)))
 	print('chunk {} read'.format(j))
 
@@ -107,9 +113,8 @@ nbi = data.shape[0]
 meandata = data.mean(axis=0,dtype=np.float64)
 
 #Setting the fixed point
-l0 = analysis.find_nearest(hcoor,temporal.h_0*delta_95) #wall normal coordinate of fixed point
+l0 = analysis.find_nearest(hcoor,temporal.h_0_bar*delta_95) #wall normal coordinate of fixed point
 ki0 = analysis.find_nearest(xcoor,xcoor0) #streamwise coordinate of fixed point
-h_mask_delta_95 = (hcoor < delta_95) #Mask to scope out the boundary layer
 
 #Compute the arithmetic mean along the specified axis.
 pfluc = data - np.tile(meandata,(nbi,1,1))
