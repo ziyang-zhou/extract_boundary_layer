@@ -246,10 +246,6 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column')
                 if (c > threshold) and (j != len(y[mask_integrate_range]) - 1):
                     Rxt_spectrum_aux.append(c)
                     loc_array.append(y_i)
-                elif j == len(y[mask_integrate_range]) - 1:
-                    print('End of integration range reached.')  # Debugging message
-                    stop_outer_loop = True
-                    break  # Exit the inner loop
                 else:
                     stop_outer_loop = True
                     break  # Exit the inner loop
@@ -282,10 +278,6 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column')
                 if (c > threshold) and (j != len(x[mask_integrate_range]) - 1):
                     Rxt_spectrum_aux.append(c)
                     loc_array.append(x_i)
-                elif j == len(y[mask_integrate_range]) - 1:
-                    print('End of integration range reached.')  # Debugging message
-                    stop_outer_loop = True
-                    break  # Exit the inner loop
                 else:
                     stop_outer_loop = True
                     break  # Exit the inner loop
