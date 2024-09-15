@@ -50,7 +50,6 @@ num_chunks = (total_timesteps - starting_timestep) // step_per_chunk
 if_interpolate = temporal.if_interpolate # Set as true if interpolation is needed to remove zeros in the contour
 if_integrate = temporal.if_integrate # Set as true if the integral is to be calculated
 troubleshoot = temporal.troubleshoot # Set as true if velocity contours are to be plotted
-integration_axis = temporal.integration_axis
 xcoor0 = temporal.xcoor0 # x location of the integration axis
 
 #Read the mesh
@@ -165,6 +164,12 @@ h_mask_plot_range = ((hcoor < h_end) & (hcoor > h_start))
 h_mask_integrate_range = (hcoor > h_start)
 
 if if_integrate == True:
+	integration_axis = 'column'
+	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis)
+	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
+	L_22_df.to_csv(temporal.project_path + 'L22+_{}'.format(integration_axis),index=False)
+
+	integration_axis = 'row'
 	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis)
 	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
 	L_22_df.to_csv(temporal.project_path + 'L22+_{}'.format(integration_axis),index=False)
