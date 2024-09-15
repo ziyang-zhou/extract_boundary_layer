@@ -199,7 +199,7 @@ def get_velocity_corr(signal_1,signal_2,height_1,height_2):
 
 ###############################################PROCESSING CONTOUR DATA#################################################################
 #Obtain the length scale of vertical velocity fluc L22 given the 2D array representing the cross correlation contour
-def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column'):
+def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.0, axis='column'):
     '''
     Computes the integral length scale along a line.
     
@@ -250,7 +250,7 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column')
                     stop_outer_loop = True
                 else:
                     break  # Exit the inner loop
-
+            print('integration stopped at ')
             if stop_outer_loop:
                 break  # Exit the outer loop
 

@@ -107,7 +107,7 @@ nbi = data.shape[0]
 meandata = data.mean(axis=0,dtype=np.float64)
 
 #Setting the fixed point
-l0 = analysis.find_nearest(hcoor,0.1*delta_95) #wall normal coordinate of fixed point
+l0 = analysis.find_nearest(hcoor,temporal.h_0*delta_95) #wall normal coordinate of fixed point
 ki0 = analysis.find_nearest(xcoor,xcoor0) #streamwise coordinate of fixed point
 h_mask_delta_95 = (hcoor < delta_95) #Mask to scope out the boundary layer
 
@@ -186,7 +186,7 @@ if troubleshoot == True:
 		
 		CS = ax.contourf(S, H, pfluc[t,:,:], levels=levels, cmap=cmap)
 		ax.set_xlim([-0.2, 0.2])
-		ax.set_ylim([0, 0.5]) 
+		ax.set_ylim([0, 1.0]) 
 		ax.set_xlabel(r'$X/delta^{95}$', fontsize=22)
 		ax.set_ylabel(r'$H/delta^{95}$', fontsize=22)
 		# Add a colorbar
