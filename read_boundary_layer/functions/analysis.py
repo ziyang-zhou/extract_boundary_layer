@@ -190,7 +190,7 @@ def get_velocity_corr(signal_1,signal_2,height_1,height_2):
         signal_2 = signal_2 - np.average(signal_2)
 
         if height_2 <= height_1:
-            cross_corr_matrix= np.cov(signal_1, signal_2, ddof=0)/(np.std(signal_1)*np.std(signal_1)) #normalize velocity signal
+            cross_corr_matrix= np.cov(signal_1, signal_2, ddof=0)/(np.std(signal_1)*np.std(signal_2)) #normalize velocity signal
             cross_corr = cross_corr_matrix[0,1]
         else:
             cross_corr_matrix = np.cov(signal_1, signal_2, ddof=0)/(np.std(signal_1)*np.std(signal_2))
@@ -199,7 +199,7 @@ def get_velocity_corr(signal_1,signal_2,height_1,height_2):
 
 ###############################################PROCESSING CONTOUR DATA#################################################################
 #Obtain the length scale of vertical velocity fluc L22 given the 2D array representing the cross correlation contour
-def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.0, axis='column'):
+def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column'):
     '''
     Computes the integral length scale along a line.
     
