@@ -154,12 +154,12 @@ levels = np.linspace(0.1, 1.0, 9)
 CS = ax.contour(S, H, Rxt_spectrum, levels=levels, colors='black')
 plt.clabel(CS, fmt='%1.1f', inline=True, fontsize=10)
 ax.set_xlim([-0.35, 0.35])
-ax.set_ylim([0, 1.5]) 
+ax.set_ylim([0, 2.0]) 
 ax.set_xlabel(r'$X/delta^{95}$', fontsize=22)
 ax.set_ylabel(r'$H/delta^{95}$', fontsize=22)
 interval = 20
 levels = np.linspace(-25, 25, 51)
-plt.savefig(temporal.project_path + 'velocity_corr_contour')
+plt.savefig(temporal.project_path + 'velocity_corr_contour_0p{}'.format(int(temporal.h_0_bar*100)))
 
 #Calculate integral length scale 22+
 h_start = 0.0*delta_95 #start location of the fixed point
