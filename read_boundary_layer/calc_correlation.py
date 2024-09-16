@@ -77,6 +77,7 @@ for j in range(num_chunks):
 		scoor = sprof
 		hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance 
 		if os.path.isfile(pfluc_path):
+			data = np.load(pfluc_path)
 			break
 
 	for n,i in enumerate(BL_line_prof[0].keys()[1:]):
@@ -100,6 +101,7 @@ for j in range(num_chunks):
 	print('data shape is {}'.format(np.shape(data)))
 	print('chunk {} read'.format(j))
 
+np.save(pfluc_path, data)
 
 # ------------------------------
 # Cross-correlation  calculation
