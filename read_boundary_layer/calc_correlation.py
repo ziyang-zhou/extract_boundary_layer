@@ -60,49 +60,48 @@ print('shape of BL line geom',BL_line_geom[0][0]['x'].shape)
 
 #For every timestep form a 2D matrix of velocities (wall normal , streamwise)
 #Array dim : 1 is time, 2 is wall normal and 3 is chordwise
-for j in range(num_chunks):
-	#Read the boundary layer history at x_loc
-	r = Reader('hdf_antares')
-	r['filename'] = bl_read_path + 'BL_line_prof_{}_{}.h5'.format(starting_timestep+j*step_per_chunk,starting_timestep+(j+1)*(step_per_chunk))
-	BL_line_prof = r.read()
-  
-	if j == 0:
-		#creation of streamwise distance array
-		xcoor = BL_line_geom[0][0]['x'][:,0,0]
-		ycoor = BL_line_geom[0][0]['y'][:,0,0] 
-		ds = np.sqrt((xcoor[1:]-xcoor[:-1])**2 + (ycoor[1:]-ycoor[:-1])**2)
-		sprof = np.zeros(ds.size+1,)
-		sprof[1:] = np.cumsum(ds)
-		scoor = sprof
-
-		hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance 
-
-#Concatenation of pfluc data array
 pfluc_path = bl_read_path + 'pfluc.npy'
 if os.path.isfile(pfluc_path):
 	data = np.load(pfluc_path)
 else:
-	for n,i in enumerate(BL_line_prof[0].keys()[1:]):
-		for m in range(len(xcoor)):  # read all spatial locations in the current timestep
-			profile_append = np.array(BL_line_prof[0][i][var][m])
-			if (m==0):
-				profile = profile_append #Create the data to be appended by concatenating the wall normal profiles for each x location
-			elif (m==1):
-				profile = np.concatenate((profile[:,np.newaxis], profile_append[:,np.newaxis]), axis=1)
-			else :
-				profile = np.concatenate((profile, profile_append[:,np.newaxis]), axis=1)
-
-		data_append = profile
-		if (n == 0) and (j == 0):
-			data = data_append
-		elif (n == 1) and (j == 0):
-			data = np.concatenate((data[np.newaxis,:,:], data_append[np.newaxis,:,:]), axis=0)
-		else:
-			data = np.concatenate((data, data_append[np.newaxis,:,:]), axis=0)
-	np.save(pfluc_path, data)
+	for j in range(num_chunks):
+		#Read the boundary layer history at x_loc
+		r = Reader('hdf_antares')
+		r['filename'] = bl_read_path + 'BL_line_prof_{}_{}.h5'.format(starting_timestep+j*step_per_chunk,starting_timestep+(j+1)*(step_per_chunk))
+		BL_line_prof = r.read()
 	
-	print('data shape is {}'.format(np.shape(data)))
-	print('chunk {} read'.format(j))
+		if j == 0:
+			#creation of streamwise distance array
+			xcoor = BL_line_geom[0][0]['x'][:,0,0]
+			ycoor = BL_line_geom[0][0]['y'][:,0,0] 
+			ds = np.sqrt((xcoor[1:]-xcoor[:-1])**2 + (ycoor[1:]-ycoor[:-1])**2)
+			sprof = np.zeros(ds.size+1,)
+			sprof[1:] = np.cumsum(ds)
+			scoor = sprof
+
+			hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance 
+
+		for n,i in enumerate(BL_line_prof[0].keys()[1:]):
+			for m in range(len(xcoor)):  # read all spatial locations in the current timestep
+				profile_append = np.array(BL_line_prof[0][i][var][m])
+				if (m==0):
+					profile = profile_append #Create the data to be appended by concatenating the wall normal profiles for each x location
+				elif (m==1):
+					profile = np.concatenate((profile[:,np.newaxis], profile_append[:,np.newaxis]), axis=1)
+				else :
+					profile = np.concatenate((profile, profile_append[:,np.newaxis]), axis=1)
+
+			data_append = profile
+			if (n == 0) and (j == 0):
+				data = data_append
+			elif (n == 1) and (j == 0):
+				data = np.concatenate((data[np.newaxis,:,:], data_append[np.newaxis,:,:]), axis=0)
+			else:
+				data = np.concatenate((data, data_append[np.newaxis,:,:]), axis=0)
+	
+		print('data shape is {}'.format(np.shape(data)))
+		print('chunk {} read'.format(j))
+	np.save(pfluc_path, data)
 
 
 # ------------------------------
