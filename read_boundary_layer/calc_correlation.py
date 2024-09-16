@@ -60,6 +60,7 @@ print('shape of BL line geom',BL_line_geom[0][0]['x'].shape)
 
 #For every timestep form a 2D matrix of velocities (wall normal , streamwise)
 #Array dim : 1 is time, 2 is wall normal and 3 is chordwise
+pfluc_path = bl_read_path + 'pfluc.npy'
 for j in range(num_chunks):
 	#Read the boundary layer history at x_loc
 	r = Reader('hdf_antares')
@@ -74,8 +75,9 @@ for j in range(num_chunks):
 		sprof = np.zeros(ds.size+1,)
 		sprof[1:] = np.cumsum(ds)
 		scoor = sprof
-
 		hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance 
+		if os.path.isfile(pfluc_path):
+			break
 
 	for n,i in enumerate(BL_line_prof[0].keys()[1:]):
 		for m in range(len(xcoor)):  # read all spatial locations in the current timestep
@@ -107,7 +109,7 @@ nbi = data.shape[0]
 meandata = data.mean(axis=0,dtype=np.float64)
 
 #Setting the fixed point
-l0 = analysis.find_nearest(hcoor,temporal.h_0*delta_95) #wall normal coordinate of fixed point
+l0 = analysis.find_nearest(hcoor,temporal.h_0_bar*delta_95) #wall normal coordinate of fixed point
 ki0 = analysis.find_nearest(xcoor,xcoor0) #streamwise coordinate of fixed point
 h_mask_delta_95 = (hcoor < delta_95) #Mask to scope out the boundary layer
 

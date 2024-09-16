@@ -250,7 +250,6 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.0, axis='column'):
                     stop_outer_loop = True
                 else:
                     break  # Exit the inner loop
-            print('integration stopped at ')
             if stop_outer_loop:
                 break  # Exit the outer loop
 
