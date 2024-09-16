@@ -28,4 +28,4 @@ le_cut,-0.025,#leading edge limit of extraction
 te_cut,-0.015,#trailing edge limit of extraction
 include_pressure_side,FALSE,#whether or not to include the pressure side in the grid
 refinement_factor,10,#increase this factor if original resolution is not fine enough
-delta_95,0.0046046,#The boundary layer thickness based on total pressure in m
+delta_95,0.00557875260710716,#The boundary layer thickness based on total pressure in m

@@ -238,7 +238,7 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column')
             stop_outer_loop = False  # Flag to control breaking out of the outer loop
 
             # Recompute the cross-correlation array
-            for j, y_i in enumerate(y[mask_integrate_range][i:]):  # Moving point
+            for j, y_i in enumerate(y[mask_integrate_range]):  # Moving point
                 p1 = pfluc[:, mask_integrate_range, :][:, j, ki0]
                 p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
                 c = get_velocity_corr(p0, p1, y0_i, y_i)
