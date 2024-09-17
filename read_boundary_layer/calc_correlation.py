@@ -123,7 +123,7 @@ Rxt_spectrum = np.zeros((hcoor.shape[0],scoor.shape[0]))
 if if_interpolate == True:
 	for ki in range(0,np.shape(pfluc)[2]-1):
 		for t in range(0,np.shape(pfluc)[0]-1):
-			i_zero = np.where(abs(pfluc[t,:,ki]) == 0)[0]
+			i_zero = np.where(abs(pfluc[t,h_mask_delta_95,ki]) == 0)[0]
 			for i in i_zero:
 				if i+1 not in i_zero:
 					pfluc[t,i,ki] = (pfluc[t,i-1,ki] + pfluc[t,i+1,ki])/2
