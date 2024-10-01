@@ -199,7 +199,7 @@ def get_velocity_corr(signal_1,signal_2,height_1,height_2):
 
 ###############################################PROCESSING CONTOUR DATA#################################################################
 #Obtain the length scale of vertical velocity fluc L22 given the 2D array representing the cross correlation contour
-def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column'):
+def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column', direction = 'plus'):
     '''
     Computes the integral length scale along a line.
     
@@ -217,6 +217,8 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column')
         Limit of cross-correlation to consider for integration (Default is 0.05).
     axis : str
         Axis along which to calculate the integral length scale. 'column' or 'row'.
+    direction : str
+        Direction of integration : 'plus' means wall normal and 'minus' means towards the wall
     
     Returns
     -------
@@ -232,7 +234,10 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column')
         L_scale = np.zeros(len(y[mask_plot_range]))
 
         for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
-            mask_integrate_range = (y > y0_i)  # Define the integration range for each point to be plotted
+            if direction == 'plus':
+                mask_integrate_range = (y > y0_i)  # Define the integration range for each point to be plotted
+            elif direction == 'minus':
+                mask_integrate_range = (y < y0_i)
             Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
             loc_array = []
             stop_outer_loop = False  # Flag to control breaking out of the outer loop
@@ -264,7 +269,7 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column')
         L_scale = np.zeros(len(y[mask_plot_range]))
 
         for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
-            mask_integrate_range = (x < x0)  # Define the integration range for each point to be plotted
+            mask_integrate_range = (x > x0)  # Define the integration range for each point to be plotted
             Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
             loc_array = []
             stop_outer_loop = False  # Flag to control breaking out of the outer loop

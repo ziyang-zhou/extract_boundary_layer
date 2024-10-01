@@ -159,6 +159,7 @@ ax.set_xlabel(r'$X/delta^{95}$', fontsize=22)
 ax.set_ylabel(r'$H/delta^{95}$', fontsize=22)
 interval = 20
 levels = np.linspace(-25, 25, 51)
+plt.tight_layout()
 plt.savefig(temporal.project_path + 'velocity_corr_contour_0p{}'.format(int(temporal.h_0_bar*100)))
 
 #Calculate integral length scale 22+
@@ -169,24 +170,24 @@ h_mask_integrate_range = (hcoor > h_start)
 
 if if_integrate == True:
 	integration_axis = 'column'
-	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis)
+	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis,direction = temporal.direction)
 	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
 	L_22_df.to_csv(temporal.project_path + 'L22+_{}'.format(integration_axis),index=False)
 
 	integration_axis = 'row'
-	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis)
+	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis,direction = temporal.direction)
 	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
 	L_22_df.to_csv(temporal.project_path + 'L22+_{}'.format(integration_axis),index=False)
 
 #Plot the contour
 
 if troubleshoot == True:
-	levels = np.linspace(-2.5, 2.5, 21)  # 20 levels from 0 to 10
+	levels = np.linspace(-3.5, 3.5, 21)  # 20 levels from 0 to 10
 	cmap = 'rainbow'
-	timestep_interval = 100
-	for t in range(0,np.shape(pfluc)[0],timestep_interval):
+	timestep_interval = 1
+	for t in range(0,int(np.shape(pfluc)[0]/10),timestep_interval):
 		print('creating contour of timestep {}'.format(t))
-		fig,ax = plt.subplots(figsize=(5,8))
+		fig,ax = plt.subplots(figsize=(8,8))
 		
 		CS = ax.contourf(S, H, pfluc[t,:,:], levels=levels, cmap=cmap)
 		ax.set_xlim([-0.2, 0.2])
@@ -196,15 +197,7 @@ if troubleshoot == True:
 		# Add a colorbar
 		cbar = plt.colorbar(CS, ax=ax)
 		cbar.set_label('Velocity', fontsize=18)
-		plt.savefig(temporal.project_path + 'velocity_corr_contour timestep {}'.format(t))
-		plt.close()
-
-	for t in range(0,np.shape(pfluc)[0],timestep_interval):
-		fig,ax = plt.subplots(figsize=(5,8))	
-		x_index = analysis.find_nearest(scoor,0.1*delta_95)
-		plt.plot(hcoor/delta_95,pfluc[t,:,x_index])
-		plt.ylim((-2.5,2.5))
-		plt.savefig(temporal.project_path + 'fluc plot {}'.format(t))
+		plt.savefig(temporal.project_path + 'velocity_contour_timestep_{}'.format(t))
 		plt.close()
 else:
 	None
