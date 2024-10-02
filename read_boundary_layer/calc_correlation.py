@@ -177,7 +177,7 @@ if if_integrate == True:
 	integration_axis = 'row'
 	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis,direction = temporal.direction)
 	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
-	L_22_df.to_csv(temporal.project_path + 'L22+_{}_{}'.format(temporal.direction,integration_axis),index=False)
+	L_22_df.to_csv(temporal.project_path + 'L22_{}_{}'.format(temporal.direction,integration_axis),index=False)
 
 #Plot the contour
 

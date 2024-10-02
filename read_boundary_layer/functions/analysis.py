@@ -253,7 +253,8 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
                     Rxt_spectrum_aux.append(c)
                     loc_array.append(y_i)
                 elif (j == len(y[mask_integrate_range]) - 1):
-                    stop_outer_loop = True
+                    if direction == 'plus':
+                        stop_outer_loop = True
                 else:
                     break  # Exit the inner loop
             if stop_outer_loop:
