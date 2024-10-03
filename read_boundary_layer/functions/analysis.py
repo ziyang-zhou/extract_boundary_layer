@@ -238,7 +238,6 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
                 mask_integrate_range = (y > y0_i)  # Define the integration range for each point to be plotted
             elif direction == 'minus':
                 mask_integrate_range = (y < y0_i)
-                threshold = 0.0
             Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
             loc_array = []
             stop_outer_loop = False  # Flag to control breaking out of the outer loop
