@@ -273,7 +273,10 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
         L_scale = np.zeros(len(y[mask_plot_range]))
 
         for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
-            mask_integrate_range = (x > x0)  # Define the integration range for each point to be plotted
+            if direction == 'plus':
+                mask_integrate_range = (x > x0)  # Define the integration range for each point to be plotted
+            elif direction == 'minus':
+                mask_integrate_range = (x < x0)
             Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
             loc_array = []
             stop_outer_loop = False  # Flag to control breaking out of the outer loop
@@ -288,9 +291,11 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
                     Rxt_spectrum_aux.append(c)
                     loc_array.append(x_i)
                 elif (j == len(x[mask_integrate_range]) - 1):
-                    stop_outer_loop = True
+                    if direction == 'plus':
+                        stop_outer_loop = True
                 else:
-                    break  # Exit the inner loop
+                    if direction == 'plus':
+                        break  # Exit the inner loop
 
             if stop_outer_loop:
                 break  # Exit the outer loop
