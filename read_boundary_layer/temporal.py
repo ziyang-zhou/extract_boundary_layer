@@ -1,5 +1,5 @@
 step_per_chunk = 50 #size of each data chunk in terms of number of timesteps
-total_timesteps = 1000 #last time step read
+total_timesteps = 3000 #last time step read
 starting_timestep = 0 #Index of timestep to start from
 timestep_size = 1/17863 #size of a timestep
 initial_time = 0.0 #first time step condidered for the reading of the boundary layer
