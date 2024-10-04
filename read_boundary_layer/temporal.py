@@ -26,8 +26,8 @@ var = 'U_n' #variable used for the cross correlation contour
 
 #Integration
 if_interpolate = True # Set as true if interpolation is needed to remove zeros in the contour
-if_integrate = True # Set as true if the integral is to be calculated
+if_integrate_axis = True # Set as true if the integral is to be calculated
+if_integrate_field = True # Set as true if the integral length scale field is to be computed
 troubleshoot = False # Set as true if velocity contours are to be plotted
 xcoor0 = -0.003036 # x location of the integration axis
 h_0_bar = 0.1 # Dimensionless wall normal position of fixed point. Normalized by delta_95
-direction = 'minus' # Direction of integration : 'plus' means wall normal and 'minus' means towards the wall
