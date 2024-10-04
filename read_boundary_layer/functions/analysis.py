@@ -299,9 +299,11 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
 
             if stop_outer_loop:
                 break  # Exit the outer loop
+            if len(loc_array) > 0:
+                L_scale[i] = np.trapz(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
+            else:
+                L_scale[i] = 0.0
 
-            L_scale[i] = np.trapz(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
-        
         scale = y[mask_plot_range]
         return L_scale, scale
 

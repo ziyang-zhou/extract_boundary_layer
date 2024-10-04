@@ -33,6 +33,8 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
 
 settings = pd.read_csv("../setting.csv", index_col= 0)
 delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary layer thickness
+le_cut = eval(settings.at["le_cut", settings.columns[0]])
+te_cut = eval(settings.at["te_cut", settings.columns[0]])
 
 mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
@@ -48,7 +50,8 @@ starting_timestep = temporal.starting_timestep
 num_chunks = (total_timesteps - starting_timestep) // step_per_chunk
 
 if_interpolate = temporal.if_interpolate # Set as true if interpolation is needed to remove zeros in the contour
-if_integrate = temporal.if_integrate # Set as true if the integral is to be calculated
+if_integrate_axis = temporal.if_integrate_axis # Set as true if the integral length scale along axis is to be calculated
+if_integrate_field = temporal.if_integrate_field # Set as true if the integral length scale field is to be calculated
 troubleshoot = temporal.troubleshoot # Set as true if velocity contours are to be plotted
 xcoor0 = temporal.xcoor0 # x location of the integration axis
 
@@ -110,9 +113,16 @@ np.save(pfluc_path, data)
 nbi = data.shape[0]
 meandata = data.mean(axis=0,dtype=np.float64)
 
+#Set the masks
+h_start = 0.00*delta_95 #start location of the fixed point
+h_end = 1.0*delta_95 #end location of the fixed point
+s_mask_plot_range = (xcoor > le_cut) & (xcoor < te_cut) #Create mask for streamwise extent of the BL extraction
+h_mask_plot_range = (hcoor > h_start) & (hcoor < h_end) #Create mask for wall normal extent of the plot
+h_masked = hcoor[h_mask_plot_range] # Obtain wall normal coordinate masked to plot range of L22
+
 #Setting the fixed point
 l0 = analysis.find_nearest(hcoor,temporal.h_0_bar*delta_95) #wall normal coordinate of fixed point
-ki0 = analysis.find_nearest(xcoor,xcoor0) #streamwise coordinate of fixed point
+ki0 = analysis.find_nearest(xcoor[s_mask_plot_range],xcoor0) #streamwise coordinate of fixed point
 h_mask_delta_95 = (hcoor < delta_95) #Mask to scope out the boundary layer
 
 #Compute the arithmetic mean along the specified axis.
@@ -163,12 +173,8 @@ plt.tight_layout()
 plt.savefig(temporal.project_path + 'velocity_corr_contour_0p{}'.format(int(temporal.h_0_bar*100)))
 
 #Calculate integral length scale 22+
-h_start = 0.01*delta_95 #start location of the fixed point
-h_end = 1.0*delta_95 #end location of the fixed point
-h_mask_plot_range = ((hcoor < h_end) & (hcoor > h_start))
-h_mask_integrate_range = (hcoor > h_start)
 
-if if_integrate == True:
+if if_integrate_axis == True:
 	integration_axis = 'column'
 	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis,direction = 'plus')
 	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
@@ -188,6 +194,14 @@ if if_integrate == True:
 	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis,direction = 'minus')
 	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
 	L_22_df.to_csv(temporal.project_path + 'L22_{}_{}'.format('minus',integration_axis),index=False)
+
+if if_integrate_field == True:
+	L_22_field = np.zeros((len(h_masked),len(scoor))) # Initialize array to store L22 field at airfoil midplane
+	# Compute the integral length scale along the wall normal direction for each streamwise point
+	for i,x0_aux in enumerate(xcoor[s_mask_plot_range]):
+		ki0_aux = analysis.find_nearest(xcoor,x0_aux) #streamwise coordinate of fixed point
+		L_22_aux, scale_aux = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0_aux],h_start,scoor[ki0_aux],h_end,axis='column',direction = 'plus')
+		L_22_field[:,i] = L_22_aux #
 
 #Plot the contour
 
