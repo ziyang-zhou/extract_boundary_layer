@@ -116,13 +116,12 @@ meandata = data.mean(axis=0,dtype=np.float64)
 #Set the masks
 h_start = 0.00*delta_95 #start location of the fixed point
 h_end = 1.0*delta_95 #end location of the fixed point
-s_mask_plot_range = (xcoor > le_cut) & (xcoor < te_cut) #Create mask for streamwise extent of the BL extraction
 h_mask_plot_range = (hcoor > h_start) & (hcoor < h_end) #Create mask for wall normal extent of the plot
 h_masked = hcoor[h_mask_plot_range] # Obtain wall normal coordinate masked to plot range of L22
 
 #Setting the fixed point
 l0 = analysis.find_nearest(hcoor,temporal.h_0_bar*delta_95) #wall normal coordinate of fixed point
-ki0 = analysis.find_nearest(xcoor[s_mask_plot_range],xcoor0) #streamwise coordinate of fixed point
+ki0 = analysis.find_nearest(xcoor,xcoor0) #streamwise coordinate of fixed point
 h_mask_delta_95 = (hcoor < delta_95) #Mask to scope out the boundary layer
 
 #Compute the arithmetic mean along the specified axis.
@@ -175,33 +174,32 @@ plt.savefig(temporal.project_path + 'velocity_corr_contour_0p{}'.format(int(temp
 #Calculate integral length scale 22+
 
 if if_integrate_axis == True:
-	integration_axis = 'column'
-	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis,direction = 'plus')
-	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
-	L_22_df.to_csv(temporal.project_path + 'L22_{}_{}'.format('plus',integration_axis),index=False)
-
-	integration_axis = 'row'
-	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis,direction = 'plus')
-	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
-	L_22_df.to_csv(temporal.project_path + 'L22_{}_{}'.format('plus',integration_axis),index=False)
-
-	integration_axis = 'column'
-	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis,direction = 'minus')
-	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
-	L_22_df.to_csv(temporal.project_path + 'L22_{}_{}'.format('minus',integration_axis),index=False)
-
-	integration_axis = 'row'
-	L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis,direction = 'minus')
-	L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
-	L_22_df.to_csv(temporal.project_path + 'L22_{}_{}'.format('minus',integration_axis),index=False)
+	integration_axis_list = ['column','row','column','row']
+	direction_list = ['plus','plus','minus','minus']
+	for i,integration_axis in enumerate(integration_axis_list):
+		L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis,direction = direction_list[i])
+		L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
+		L_22_df.to_csv(temporal.project_path + 'L22_{}_{}'.format(direction_list[i],integration_axis),index=False)
 
 if if_integrate_field == True:
 	L_22_field = np.zeros((len(h_masked),len(scoor))) # Initialize array to store L22 field at airfoil midplane
 	# Compute the integral length scale along the wall normal direction for each streamwise point
-	for i,x0_aux in enumerate(xcoor[s_mask_plot_range]):
+	for i,x0_aux in enumerate(xcoor):
 		ki0_aux = analysis.find_nearest(xcoor,x0_aux) #streamwise coordinate of fixed point
 		L_22_aux, scale_aux = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0_aux],h_start,scoor[ki0_aux],h_end,axis='column',direction = 'plus')
-		L_22_field[:,i] = L_22_aux #
+		L_22_field[:,i] = L_22_aux
+
+	#Save integral length scale field as h5
+	base_int_scale = Base()
+	base_int_scale['0'] = Zone()
+	base_int_scale['0']['0'] = Instant()
+	base_int_scale['0'].shared['x_coord'] = xcoor
+	base_int_scale['0'].shared['h_coord'] = hcoor[h_mask_plot_range] #mask hcoor to scope of the integral length scale plot
+	base_int_scale['0'].shared['u_rms'] = L_22_field
+	myw = Writer('hdf_antares')
+	myw['filename'] = temporal.project_path + 'int_scale_field'
+	myw['base'] = base_int_scale
+	myw.dump()
 
 #Plot the contour
 
