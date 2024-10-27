@@ -81,6 +81,7 @@ for j in range(num_chunks):
 		hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance 
 		if os.path.isfile(pfluc_path):
 			data = np.load(pfluc_path)
+			print(pfluc_path,'already exists')
 			break
 
 	for n,i in enumerate(BL_line_prof[0].keys()[1:]):
