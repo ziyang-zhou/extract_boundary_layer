@@ -237,6 +237,7 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
             if direction == 'plus':
                 mask_integrate_range = (y > y0_i)  # Define the integration range for each point to be plotted
             elif direction == 'minus':
+                threshold = 0.0 #This is done to prevent integration range from becoming null
                 mask_integrate_range = (y < y0_i)
             Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
             loc_array = []
@@ -261,9 +262,12 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
                         None
             if stop_outer_loop:
                 break  # Exit the outer loop
+            
+            if len(loc_array) is not 0:
+                L_scale[i] = np.trapz(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
+            else:
+                L_scale[i] = 0.0
 
-            L_scale[i] = np.trapz(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
-        
         scale = y[mask_plot_range]
         return L_scale, scale
 
