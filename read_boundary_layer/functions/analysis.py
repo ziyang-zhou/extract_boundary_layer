@@ -183,18 +183,14 @@ def get_pearson_corr(signal_1,signal_2,dt):
 	time_cross_corr = np.arange(-len(signal_1), len(signal_1)-1)*dt
 	return time_cross_corr,cross_norm
 
-def get_velocity_corr(signal_1,signal_2,height_1,height_2):
+def get_velocity_corr(signal_1,signal_2):
         #Ensure that signal_1 belongs to the fixed point
         #takes in two signals (input as fluctuations about the mean) and outputs the cross-correlation with time lag
         signal_1 = signal_1 - np.average(signal_1)
         signal_2 = signal_2 - np.average(signal_2)
-
-        if height_2 <= height_1:
-            cross_corr_matrix= np.cov(signal_1, signal_2, ddof=0)/(np.std(signal_1)*np.std(signal_2)) #normalize velocity signal
-            cross_corr = cross_corr_matrix[0,1]
-        else:
-            cross_corr_matrix = np.cov(signal_1, signal_2, ddof=0)/(np.std(signal_1)*np.std(signal_2))
-            cross_corr = cross_corr_matrix[0,1]
+        denominator = (np.sum(signal_1**2)/len(signal_1) * np.sum(signal_2**2)/len(signal_2))**(0.5)
+        cross_corr_matrix= np.average(np.sum(np.multiply(signal_1,signal_2)))/denominator #normalize velocity signal
+        cross_corr = cross_corr_matrix[0,1]
         return cross_corr
 
 ###############################################PROCESSING CONTOUR DATA#################################################################

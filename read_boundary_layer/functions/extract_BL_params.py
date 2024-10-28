@@ -101,7 +101,7 @@ def get_delta99_from_line(wall_distance,BL_detection_variable,filter_size_var=10
 
 def get_delta95(wall_distance,BL_detection_variable):
 	max_value = np.max(BL_detection_variable)
-	threshold_value = 0.99*max_value
+	threshold_value = 0.95*max_value
 	for i, value in enumerate(BL_detection_variable):
 		if value >= threshold_value:
 			delta_95 = wall_distance[i]

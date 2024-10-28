@@ -122,7 +122,7 @@ np.save(pfluc_path, data)
 # Boundary Layer thickness calculation
 # ------------------------------
 #Read the fluctuation of tangential velocity
-bl_var = 'Ut'
+bl_var = 'U_t'
 ut_fluc_path = bl_read_path + 'ut_fluc.npy'
 for j in range(num_chunks):
 	#Read the boundary layer history at x_loc
