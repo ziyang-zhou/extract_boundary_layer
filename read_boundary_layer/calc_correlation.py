@@ -215,7 +215,7 @@ for ki in range(0,np.shape(pfluc)[2]-1):                                        
 	for l in range(0,np.shape(pfluc)[1]-1):                                       #wall normal index_point
 		p1 = pfluc[:,l,ki]
 		p0 = pfluc[:,l0,ki0]
-		c = analysis.get_velocity_corr(p0,p1,hcoor[l0],hcoor[l])
+		c = analysis.get_velocity_corr(p0,p1)
 		Rxt_spectrum[l,ki] = c
 
 print('shape of the matrix is',pfluc.shape)
