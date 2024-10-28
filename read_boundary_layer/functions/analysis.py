@@ -286,7 +286,7 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
 
             # Recompute the cross-correlation array
             for j, x_i in enumerate(x[mask_integrate_range]):  # Moving point
-                p1 = pfluc[:, mask_plot_range, mask_integrate_range][:, i, j]
+                p1 = pfluc[:, mask_plot_range, :][:, :, mask_integrate_range][:, i, j]
                 p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
                 c = get_velocity_corr(p0, p1, y0_i, y0_i)
 
