@@ -46,6 +46,7 @@ nb_points = temporal.nb_points #number of points across the boundary layer
 var = temporal.var
 timestep_size = temporal.timestep_size
 fs = 1/timestep_size
+timestep_interval = temporal.timestep_interval
 
 # Set the total number of timesteps and the number of chunks
 step_per_chunk = temporal.step_per_chunk
@@ -165,12 +166,12 @@ print('shape of the matrix is',pfluc.shape)
 print('format is (time,wall normal,streamwise)')
 
 #Define the limits of the plot
-S,H =np.meshgrid((scoor-scoor[ki0])/delta_95,hcoor/delta_95)
+S,H =np.meshgrid((scoor-scoor[ki0]),hcoor)
 fig,ax = plt.subplots(figsize=(5,8))
 
 # Contour plot with black lines
 levels = np.linspace(0.1, 1.0, 9)
-CS = ax.contour(S, H, Rxt_spectrum, levels=levels, colors='black')
+CS = ax.contour(S/delta_95, H/delta_95, Rxt_spectrum, levels=levels, colors='black')
 plt.clabel(CS, fmt='%1.1f', inline=True, fontsize=10)
 ax.set_xlim([-0.35, 0.35])
 ax.set_ylim([0, 2.0]) 
@@ -179,7 +180,7 @@ ax.set_ylabel(r'$H/delta^{95}$', fontsize=22)
 interval = 20
 levels = np.linspace(-25, 25, 51)
 plt.tight_layout()
-plt.savefig(temporal.project_path + 'velocity_corr_contour_0p{}'.format(int(temporal.h_0_bar*100)))
+plt.savefig(probe_save_path + 'velocity_corr_contour_0p{}'.format(int(temporal.h_0_bar*100)))
 
 #Calculate integral length scale 22+
 
@@ -216,8 +217,8 @@ if if_integrate_field == True:
 if troubleshoot == True:
 	levels = np.linspace(-3.5, 3.5, 21)  # 20 levels from 0 to 10
 	cmap = 'rainbow'
-	timestep_interval = 1
-	for t in range(0,int(np.shape(pfluc)[0]/10),timestep_interval):
+	print('total number of time steps is {}'.format(np.shape(pfluc)[0]))
+	for t in range(0,int(np.shape(pfluc)[0]),timestep_interval):
 		print('creating contour of timestep {}'.format(t))
 		fig,ax = plt.subplots(figsize=(8,8))
 		
@@ -229,7 +230,7 @@ if troubleshoot == True:
 		# Add a colorbar
 		cbar = plt.colorbar(CS, ax=ax)
 		cbar.set_label('Velocity', fontsize=18)
-		plt.savefig(temporal.project_path + 'velocity_contour_timestep_{}'.format(t))
+		plt.savefig(probe_save_path + 'velocity_contour_timestep_{}'.format(t))
 		plt.close()
 else:
 	None
