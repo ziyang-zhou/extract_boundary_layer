@@ -1,6 +1,7 @@
 # This script takes in the boundary layer profile output outputs the integral length scale of wall normal velocity fluctuation 
 from antares import *
 from functions import analysis
+from functions import extract_BL_params
 from scipy.signal import butter, lfilter, savgol_filter
 from scipy import interpolate, integrate
 import vtk
@@ -118,6 +119,58 @@ for j in range(num_chunks):
 np.save(pfluc_path, data)
 
 # ------------------------------
+# Boundary Layer thickness calculation
+# ------------------------------
+#Read the fluctuation of tangential velocity
+bl_var = 'Ut'
+ut_fluc_path = bl_read_path + 'ut_fluc.npy'
+for j in range(num_chunks):
+	#Read the boundary layer history at x_loc
+	r = Reader('hdf_antares')
+	r['filename'] = bl_read_path + 'BL_line_prof_{}_{}.h5'.format(starting_timestep+j*step_per_chunk,starting_timestep+(j+1)*(step_per_chunk))
+	BL_line_prof = r.read()
+  
+	if j == 0:
+		#creation of streamwise distance array
+		xcoor = BL_line_geom[0][0]['x'][:,0,0]
+		ycoor = BL_line_geom[0][0]['y'][:,0,0] 
+		ds = np.sqrt((xcoor[1:]-xcoor[:-1])**2 + (ycoor[1:]-ycoor[:-1])**2)
+		sprof = np.zeros(ds.size+1,)
+		sprof[1:] = np.cumsum(ds)
+		scoor = sprof
+		hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance 
+		if os.path.isfile(ut_fluc_path):
+			ut_data = np.load(ut_fluc_path)
+			print(ut_fluc_path,'already exists')
+			break
+
+	for n,i in enumerate(BL_line_prof[0].keys()[1:]):
+		for m in range(len(xcoor)):  # read all spatial locations in the current timestep
+			profile_append = np.array(BL_line_prof[0][i][bl_var][m])
+			if (m==0):
+				profile = profile_append #Create the data to be appended by concatenating the wall normal profiles for each x location
+			elif (m==1):
+				profile = np.concatenate((profile[:,np.newaxis], profile_append[:,np.newaxis]), axis=1)
+			else :
+				profile = np.concatenate((profile, profile_append[:,np.newaxis]), axis=1)
+
+		ut_data_append = profile
+		if (n == 0) and (j == 0):
+			ut_data = ut_data_append
+		elif (n == 1) and (j == 0):
+			ut_data = np.concatenate((ut_data[np.newaxis,:,:], ut_data_append[np.newaxis,:,:]), axis=0)
+		else:
+			ut_data = np.concatenate((ut_data, ut_data_append[np.newaxis,:,:]), axis=0)
+
+	print('data shape is {}'.format(np.shape(ut_data)))
+	print('chunk {} read'.format(j))
+
+np.save(ut_fluc_path, ut_data)
+
+#Obtain the mean tangential velocity
+ut_mean = ut_data.mean(axis=0,dtype=np.float64)
+
+# ------------------------------
 # Cross-correlation  calculation
 # ------------------------------
 
@@ -134,6 +187,9 @@ h_masked = hcoor[h_mask_plot_range] # Obtain wall normal coordinate masked to pl
 l0 = analysis.find_nearest(hcoor,temporal.h_0_bar*delta_95) #wall normal coordinate of fixed point
 ki0 = analysis.find_nearest(xcoor,xcoor0) #streamwise coordinate of fixed point
 h_mask_delta_95 = (hcoor < delta_95) #Mask to scope out the boundary layer
+
+#Display boundary layer thickness
+delta_95_calc = extract_BL_params.get_delta95(hcoor,ut_mean[:,ki0])
 
 #Compute the arithmetic mean along the specified axis.
 pfluc = data - np.tile(meandata,(nbi,1,1))
