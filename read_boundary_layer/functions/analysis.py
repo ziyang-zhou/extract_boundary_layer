@@ -189,8 +189,7 @@ def get_velocity_corr(signal_1,signal_2):
         signal_1 = signal_1 - np.average(signal_1)
         signal_2 = signal_2 - np.average(signal_2)
         denominator = (np.sum(signal_1**2)/len(signal_1) * np.sum(signal_2**2)/len(signal_2))**(0.5)
-        cross_corr_matrix= np.average(np.sum(np.multiply(signal_1,signal_2)))/denominator #normalize velocity signal
-        cross_corr = cross_corr_matrix[0,1]
+        cross_corr= np.average(np.sum(np.multiply(signal_1,signal_2)))/denominator #normalize velocity signal
         return cross_corr
 
 ###############################################PROCESSING CONTOUR DATA#################################################################
@@ -242,7 +241,7 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
             for j, y_i in enumerate(y[mask_integrate_range]):  # Moving point
                 p1 = pfluc[:, mask_integrate_range, :][:, j, ki0]
                 p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
-                c = get_velocity_corr(p0, p1, y0_i, y_i)
+                c = get_velocity_corr(p0, p1)
 
                 if (c > threshold) and (j != len(y[mask_integrate_range]) - 1):
                     Rxt_spectrum_aux.append(c)
@@ -284,7 +283,7 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
             for j, x_i in enumerate(x[mask_integrate_range]):  # Moving point
                 p1 = pfluc[:, mask_plot_range, :][:, :, mask_integrate_range][:, i, j]
                 p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
-                c = get_velocity_corr(p0, p1, y0_i, y0_i)
+                c = get_velocity_corr(p0, p1)
 
                 if (c > threshold) and (j != len(x[mask_integrate_range]) - 1):
                     Rxt_spectrum_aux.append(c)
