@@ -314,8 +314,6 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
         print('Invalid choice of axis for length scale calculation')
         return None, None
 
-
-
 def interpolate_zeros(array):
     non_zero_indices = np.where(array != 0.0)[0]
     zero_indices = np.where(array == 0.0)[0]
@@ -339,3 +337,4 @@ def mov_avg(X,k):
     for i in range(k//2,X_new.size-k//2):
         X_new[i] = sum(X[i-k//2:i+k//2])/k
     return X_new
+

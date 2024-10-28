@@ -36,8 +36,12 @@ delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary
 le_cut = eval(settings.at["le_cut", settings.columns[0]])
 te_cut = eval(settings.at["te_cut", settings.columns[0]])
 
+project_path = temporal.project_path
 mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
+result_save_path = project_path + 'result/'
+
+probe_number = temporal.probe_number
 nb_points = temporal.nb_points #number of points across the boundary layer
 var = temporal.var
 timestep_size = temporal.timestep_size
@@ -54,6 +58,11 @@ if_integrate_axis = temporal.if_integrate_axis # Set as true if the integral len
 if_integrate_field = temporal.if_integrate_field # Set as true if the integral length scale field is to be calculated
 troubleshoot = temporal.troubleshoot # Set as true if velocity contours are to be plotted
 xcoor0 = temporal.xcoor0 # x location of the integration axis
+
+# Create required directory
+probe_save_path = result_save_path + 'probe_{}/'.format(probe_number)
+if not os.path.exists(probe_save_path):
+    os.makedirs(result_save_path)
 
 #Read the mesh
 r=Reader('hdf_antares')
@@ -180,7 +189,7 @@ if if_integrate_axis == True:
 	for i,integration_axis in enumerate(integration_axis_list):
 		L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis,direction = direction_list[i])
 		L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
-		L_22_df.to_csv(temporal.project_path + 'L22_{}_{}'.format(direction_list[i],integration_axis),index=False)
+		L_22_df.to_csv(probe_save_path + 'L22_{}_{}'.format(direction_list[i],integration_axis),index=False)
 
 if if_integrate_field == True:
 	L_22_field = np.zeros((len(h_masked),len(scoor))) # Initialize array to store L22 field at airfoil midplane
