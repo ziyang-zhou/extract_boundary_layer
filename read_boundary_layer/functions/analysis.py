@@ -188,8 +188,8 @@ def get_velocity_corr(signal_1,signal_2):
         #takes in two signals (input as fluctuations about the mean) and outputs the cross-correlation with time lag
         signal_1 = signal_1 - np.average(signal_1)
         signal_2 = signal_2 - np.average(signal_2)
-        denominator = (np.sum(signal_1**2)/len(signal_1) * np.sum(signal_2**2)/len(signal_2))**(0.5)
-        cross_corr= np.average(np.sum(np.multiply(signal_1,signal_2)))/denominator #normalize velocity signal
+        denominator = np.sqrt(np.mean(signal_1**2) * np.mean(signal_2**2))
+        cross_corr= np.mean(np.multiply(signal_1,signal_2))/denominator #normalize velocity signal
         return cross_corr
 
 ###############################################PROCESSING CONTOUR DATA#################################################################
