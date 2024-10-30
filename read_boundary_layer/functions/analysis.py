@@ -184,12 +184,13 @@ def get_pearson_corr(signal_1,signal_2,dt):
 	return time_cross_corr,cross_norm
 
 def get_velocity_corr(signal_1,signal_2):
-        #Ensure that signal_1 belongs to the fixed point
-        #takes in two signals (input as fluctuations about the mean) and outputs the cross-correlation with time lag
-        signal_1 = signal_1 - np.average(signal_1)
-        signal_2 = signal_2 - np.average(signal_2)
-        denominator = np.sqrt(np.mean(signal_1**2) * np.mean(signal_2**2))
-        cross_corr= np.mean(np.multiply(signal_1,signal_2))/denominator #normalize velocity signal
+        #takes in two signals and outputs the cross-correlation
+        signal_1 = signal_1 - np.mean(signal_1)
+        signal_2 = signal_2 - np.mean(signal_2)
+        denominator = np.std(signal_1)*np.std(signal_2)
+        signal_1_signal_2 = np.stack((signal_1, signal_2), axis=0)
+        numerator = np.cov(signal_1_signal_2)[0,1]
+        cross_corr= numerator/denominator #normalize velocity signal
         return cross_corr
 
 ###############################################PROCESSING CONTOUR DATA#################################################################

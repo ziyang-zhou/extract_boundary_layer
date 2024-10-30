@@ -27,7 +27,8 @@ var = 'U_n' #variable used for the cross correlation contour
 #Integration
 if_interpolate = True # Set as true if interpolation is needed to remove zeros in the contour
 if_integrate_axis = True # Set as true if the integral is to be calculated
-if_integrate_field = True # Set as true if the integral length scale field is to be computed
+if_integrate_field = False # Set as true if the integral length scale field is to be computed
+if_read_boundary_velocity = False # Set as true for computation of mean velocity
 troubleshoot = False # Set as true if velocity contours are to be plotted
 xcoor0 = -0.003036 # x location of the integration axis
 probe_number = 25 # probe location at which to plot the interal length
