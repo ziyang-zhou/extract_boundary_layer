@@ -364,14 +364,16 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='
             for j, y_i in enumerate(y[mask_integrate_range]):  # Moving point
                 p1 = pfluc[:, mask_integrate_range, :][:, j, ki0]
                 p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
+                p1 = butter_bandpass_filter(p1, 1000, 8000, fs, order=5)
+                p0 = butter_bandpass_filter(p0, 1000, 8000, fs, order=5)
                 c = get_velocity_corr(p0, p1)
                 Rxt_spectrum_aux.append(c)
                 loc_array.append(y_i)
-                #Integrate exp fit
-                popt, _ = curve_fit(exp_func, loc_array, Rxt_spectrum_aux) # curve fit to obtain exponential function
-                loc_fit = np.linspace(min(loc_array), max(loc_array), 50)
-                Rxt_fit = exp_func(loc_fit, *popt)
-                L_scale[i] = np.trapz(np.array(Rxt_fit), np.array(loc_fit) - loc_fit[0])
+            #Integrate exp fit
+            popt, _ = curve_fit(exp_func, loc_array, Rxt_spectrum_aux) # curve fit to obtain exponential function
+            loc_fit = np.linspace(min(loc_array), max(loc_array), 50)
+            Rxt_fit = exp_func(loc_fit, *popt)
+            L_scale[i] = np.trapz(np.array(Rxt_fit), np.array(loc_fit) - loc_fit[0])
 
 
         scale = y[mask_plot_range]
@@ -394,14 +396,16 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='
             for j, x_i in enumerate(x[mask_integrate_range]):  # Moving point
                 p1 = pfluc[:, mask_plot_range, :][:, :, mask_integrate_range][:, i, j]
                 p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
+                p1 = butter_bandpass_filter(p1, 1000, 8000, fs, order=5)
+                p0 = butter_bandpass_filter(p0, 1000, 8000, fs, order=5)
                 c = get_velocity_corr(p0, p1)
                 Rxt_spectrum_aux.append(c)
                 loc_array.append(x_i)
-                #Integrate exp fit
-                popt, _ = curve_fit(exp_func, loc_array, Rxt_spectrum_aux) # curve fit to obtain exponential function
-                loc_fit = np.linspace(min(loc_array), max(loc_array), 50)
-                Rxt_fit = exp_func(loc_fit, *popt)
-                L_scale[i] = np.trapz(np.array(Rxt_fit), np.array(loc_fit) - loc_fit[0])
+            #Integrate exp fit
+            popt, _ = curve_fit(exp_func, loc_array, Rxt_spectrum_aux) # curve fit to obtain exponential function
+            loc_fit = np.linspace(min(loc_array), max(loc_array), 50)
+            Rxt_fit = exp_func(loc_fit, *popt)
+            L_scale[i] = np.trapz(np.array(Rxt_fit), np.array(loc_fit) - loc_fit[0])
 
         scale = y[mask_plot_range]
         return L_scale, scale
@@ -436,7 +440,7 @@ def mov_avg(X,k):
 
 # Define the exponential function
 def exp_func(x, A, L):
-    return A*np.exp(x**2 / L**2)
+    return A*np.exp(x*L)
 
 def butter_bandpass(lowcut, highcut, fs, order=5):
     nyq = 0.5 * fs
