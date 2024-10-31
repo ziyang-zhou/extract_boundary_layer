@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as sig
-import scipy.optimize as opt
 from scipy.integrate import quad
 from scipy import interpolate, integrate
+from scipy.optimize import curve_fit
 from functions import extract_BL_params
 import math
 from scipy.signal import butter, lfilter
@@ -316,6 +316,103 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='colu
         print('Invalid choice of axis for length scale calculation')
         return None, None
 
+def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='column', direction = 'plus'):
+    '''
+    Computes the integral length scale along a line.
+    
+    Parameters
+    ----------
+    pfluc : np.ndarray
+        3D array of the time history of data on a plane. 
+    x : np.ndarray
+        1D array of horizontal axis.
+    y : np.ndarray
+        1D array of vertical axis.
+    x0, y0, x1, y1 : float
+        x0, y0 is the location of the start of the plot range and x1, y1 is the location of the end of the plot range.
+    fs : int 
+        sampling frequency of the pfluc data
+    threshold : float
+        Limit of cross-correlation to consider for integration (Default is 0.05).
+    axis : str
+        Axis along which to calculate the integral length scale. 'column' or 'row'.
+    direction : str
+        Direction of integration : 'plus' means wall normal and 'minus' means towards the wall
+    
+    Returns
+    -------
+    L_scale : np.ndarray
+        Computed length scale for each spatial location along the chosen axis.
+    scale : np.ndarray
+        Spatial axis along which length scale is computed.
+    '''
+    
+    if axis == 'column':
+        ki0 = find_nearest(x, x0)  # Find the x coordinate index of the origin
+        mask_plot_range = (y > y0) & (y < y1)
+        L_scale = np.zeros(len(y[mask_plot_range]))
+
+        for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
+            if direction == 'plus':
+                mask_integrate_range = (y > y0_i)  # Define the integration range for each point to be plotted
+            elif direction == 'minus':
+                mask_integrate_range = (y < y0_i)
+            Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
+            loc_array = []
+            stop_outer_loop = False  # Flag to control breaking out of the outer loop
+
+            # Recompute the cross-correlation array
+            for j, y_i in enumerate(y[mask_integrate_range]):  # Moving point
+                p1 = pfluc[:, mask_integrate_range, :][:, j, ki0]
+                p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
+                # Perform bandpass filter in order to remove side lobe
+                c = get_velocity_corr(p0, p1)
+                Rxt_spectrum_aux.append(c)
+                loc_array.append(y_i)
+                #Integrate exp fit
+                popt, _ = curve_fit(exp_func, x, y) # curve fit to obtain exponential function
+                loc_fit = np.linspace(min(loc_array), max(loc_array), 100)
+                Rxt_fit = exp_func(loc_fit, *popt)
+                L_scale[i] = np.trapz(np.array(Rxt_fit), np.array(loc_fit) - loc_fit[0])
+
+
+        scale = y[mask_plot_range]
+        return L_scale, scale
+
+    elif axis == 'row':
+        ki0 = find_nearest(x, x0)  # Find the x coordinate index of the origin
+        mask_plot_range = (y > y0) & (y < y1)
+        L_scale = np.zeros(len(y[mask_plot_range]))
+
+        for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
+            if direction == 'plus':
+                mask_integrate_range = (x > x0)  # Define the integration range for each point to be plotted
+            elif direction == 'minus':
+                mask_integrate_range = (x < x0)
+            Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
+            loc_array = []
+            stop_outer_loop = False  # Flag to control breaking out of the outer loop
+
+            # Recompute the cross-correlation array
+            for j, x_i in enumerate(x[mask_integrate_range]):  # Moving point
+                p1 = pfluc[:, mask_plot_range, :][:, :, mask_integrate_range][:, i, j]
+                p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
+                c = get_velocity_corr(p0, p1)
+                Rxt_spectrum_aux.append(c)
+                loc_array.append(x_i)
+                #Integrate exp fit
+                popt, _ = curve_fit(exp_func, x, y) # curve fit to obtain exponential function
+                loc_fit = np.linspace(min(loc_array), max(loc_array), 100)
+                Rxt_fit = exp_func(loc_fit, *popt)
+                L_scale[i] = np.trapz(np.array(Rxt_fit), np.array(loc_fit) - loc_fit[0])
+
+        scale = y[mask_plot_range]
+        return L_scale, scale
+
+    else:
+        print('Invalid choice of axis for length scale calculation')
+        return None, None
+
 def interpolate_zeros(array):
     non_zero_indices = np.where(array != 0.0)[0]
     zero_indices = np.where(array == 0.0)[0]
@@ -339,6 +436,10 @@ def mov_avg(X,k):
     for i in range(k//2,X_new.size-k//2):
         X_new[i] = sum(X[i-k//2:i+k//2])/k
     return X_new
+
+# Define the exponential function
+def exp_func(x, L):
+    return np.exp(x**2 / L**2)
 
 def butter_bandpass(lowcut, highcut, fs, order=5):
     nyq = 0.5 * fs
