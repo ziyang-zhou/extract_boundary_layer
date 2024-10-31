@@ -218,8 +218,8 @@ for ki in range(0,np.shape(pfluc)[2]-1):                                        
 	for l in range(0,np.shape(pfluc)[1]-1):                                       #wall normal index_point
 		p1 = pfluc[:,l,ki]
 		p0 = pfluc[:,l0,ki0]
-		p1 = butter_bandpass_filter(p1, 1000, 8000, fs, order=5)
-		p0 = butter_bandpass_filter(p0, 1000, 8000, fs, order=5)
+		#p1 = butter_bandpass_filter(p1, 1000, 8000, fs, order=5)
+		#p0 = butter_bandpass_filter(p0, 1000, 8000, fs, order=5)
 		c = analysis.get_velocity_corr(p0,p1)
 		Rxt_spectrum[l,ki] = c
 

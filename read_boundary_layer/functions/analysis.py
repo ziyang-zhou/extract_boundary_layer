@@ -364,8 +364,6 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='
             for j, y_i in enumerate(y[mask_integrate_range]):  # Moving point
                 p1 = pfluc[:, mask_integrate_range, :][:, j, ki0]
                 p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
-                p1 = butter_bandpass_filter(p1, 1000, 8000, fs, order=5)
-                p0 = butter_bandpass_filter(p0, 1000, 8000, fs, order=5)
                 c = get_velocity_corr(p0, p1)
                 Rxt_spectrum_aux.append(c)
                 loc_array.append(y_i)
@@ -373,8 +371,7 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='
             popt, _ = curve_fit(exp_func, loc_array, Rxt_spectrum_aux) # curve fit to obtain exponential function
             loc_fit = np.linspace(min(loc_array), max(loc_array), 50)
             Rxt_fit = exp_func(loc_fit, *popt)
-            L_scale[i] = np.trapz(np.array(Rxt_fit), np.array(loc_fit) - loc_fit[0])
-
+            L_scale[i] = calculate_length_scale(Rxt_fit, np.array(loc_fit) - loc_fit[0])
 
         scale = y[mask_plot_range]
         return L_scale, scale
@@ -396,8 +393,6 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='
             for j, x_i in enumerate(x[mask_integrate_range]):  # Moving point
                 p1 = pfluc[:, mask_plot_range, :][:, :, mask_integrate_range][:, i, j]
                 p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
-                p1 = butter_bandpass_filter(p1, 1000, 8000, fs, order=5)
-                p0 = butter_bandpass_filter(p0, 1000, 8000, fs, order=5)
                 c = get_velocity_corr(p0, p1)
                 Rxt_spectrum_aux.append(c)
                 loc_array.append(x_i)
@@ -405,7 +400,7 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='
             popt, _ = curve_fit(exp_func, loc_array, Rxt_spectrum_aux) # curve fit to obtain exponential function
             loc_fit = np.linspace(min(loc_array), max(loc_array), 50)
             Rxt_fit = exp_func(loc_fit, *popt)
-            L_scale[i] = np.trapz(np.array(Rxt_fit), np.array(loc_fit) - loc_fit[0])
+            L_scale[i] = calculate_length_scale(Rxt_fit, np.array(loc_fit) - loc_fit[0])
 
         scale = y[mask_plot_range]
         return L_scale, scale
@@ -453,3 +448,32 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
     y = lfilter(b, a, data)
     return y
+
+def calculate_length_scale(Rxt_fit, loc_fit):
+    """
+    Calculate the length scale by integrating Rxt_fit up to the first crossing below -0.05.
+
+    Parameters:
+    - Rxt_fit: Array of values to integrate.
+    - loc_fit: Corresponding array of locations.
+
+    Returns:
+    - Length scale: The result of the integration.
+    """
+    # Find the index of the first crossing below -0.05
+    zero_crossing_index = np.where(Rxt_fit < -0.05)[0]
+
+    if zero_crossing_index.size > 0:
+        first_zero_index = zero_crossing_index[0]
+    else:
+        # If no crossing is found, use the whole array
+        first_zero_index = len(Rxt_fit)
+
+    # Slice the arrays up to the first zero crossing
+    Rxt_slice = Rxt_fit[:first_zero_index]
+    loc_slice = loc_fit[:first_zero_index]
+
+    # Perform the integration
+    length_scale = np.trapz(Rxt_slice, loc_slice - loc_slice[0])
+    
+    return length_scale
