@@ -191,7 +191,8 @@ ki0 = analysis.find_nearest(xcoor,xcoor0) #streamwise coordinate of fixed point
 h_mask_delta_95 = (hcoor < delta_95) #Mask to scope out the boundary layer
 
 #Display boundary layer thickness
-delta_95_calc = extract_BL_params.get_delta95(hcoor,ut_mean[:,ki0])
+if if_read_boundary_velocity:
+	delta_95_calc = extract_BL_params.get_delta95(hcoor,ut_mean[:,ki0])
 
 #Compute the arithmetic mean along the specified axis.
 pfluc = data - np.tile(meandata,(nbi,1,1))
@@ -246,7 +247,7 @@ if if_integrate_axis == True:
 	integration_axis_list = ['column','row','column','row']
 	direction_list = ['plus','plus','minus','minus']
 	for i,integration_axis in enumerate(integration_axis_list):
-		L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,axis=integration_axis,direction = direction_list[i])
+		L_22, scale = analysis.get_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,fs,axis=integration_axis,direction = direction_list[i])
 		L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
 		L_22_df.to_csv(probe_save_path + 'L22_{}_{}'.format(direction_list[i],integration_axis),index=False)
 

@@ -6,8 +6,7 @@ from scipy.integrate import quad
 from scipy import interpolate, integrate
 from functions import extract_BL_params
 import math
-import os
-import glob
+from scipy.signal import butter, lfilter
 import pdb
 from antares import *
 
@@ -195,7 +194,7 @@ def get_velocity_corr(signal_1,signal_2):
 
 ###############################################PROCESSING CONTOUR DATA#################################################################
 #Obtain the length scale of vertical velocity fluc L22 given the 2D array representing the cross correlation contour
-def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column', direction = 'plus'):
+def get_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='column', direction = 'plus'):
     '''
     Computes the integral length scale along a line.
     
@@ -209,6 +208,8 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
         1D array of vertical axis.
     x0, y0, x1, y1 : float
         x0, y0 is the location of the start of the plot range and x1, y1 is the location of the end of the plot range.
+    fs : int 
+        sampling frequency of the pfluc data
     threshold : float
         Limit of cross-correlation to consider for integration (Default is 0.05).
     axis : str
@@ -242,6 +243,9 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
             for j, y_i in enumerate(y[mask_integrate_range]):  # Moving point
                 p1 = pfluc[:, mask_integrate_range, :][:, j, ki0]
                 p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
+                # Perform bandpass filter in order to remove side lobe
+                p1 = butter_bandpass_filter(p1, 1000, 8000, fs, order=5)
+                p0 = butter_bandpass_filter(p0, 1000, 8000, fs, order=5)
                 c = get_velocity_corr(p0, p1)
 
                 if (c > threshold) and (j != len(y[mask_integrate_range]) - 1):
@@ -284,6 +288,8 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, threshold=0.05, axis='column',
             for j, x_i in enumerate(x[mask_integrate_range]):  # Moving point
                 p1 = pfluc[:, mask_plot_range, :][:, :, mask_integrate_range][:, i, j]
                 p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
+                p1 = butter_bandpass_filter(p1, 1000, 8000, fs, order=5)
+                p0 = butter_bandpass_filter(p0, 1000, 8000, fs, order=5)
                 c = get_velocity_corr(p0, p1)
 
                 if (c > threshold) and (j != len(x[mask_integrate_range]) - 1):
@@ -334,3 +340,14 @@ def mov_avg(X,k):
         X_new[i] = sum(X[i-k//2:i+k//2])/k
     return X_new
 
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
