@@ -367,12 +367,10 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                 c = get_velocity_corr(p0, p1)
                 Rxt_spectrum_aux.append(c)
                 loc_array.append(y_i)
-            #Integrate exp fit
-            #popt, _ = curve_fit(exp_func, loc_array, Rxt_spectrum_aux) # curve fit to obtain exponential function
-            #loc_fit = np.linspace(min(loc_array), max(loc_array), 50)
-            #Rxt_fit = exp_func(loc_fit, *popt)
-            L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
-
+            if len(loc_array) > 0 : 
+                L_scale[i] = calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
+            else:
+                L_scale[i] = 0
         scale = y[mask_plot_range]
         return L_scale, scale
 
@@ -396,11 +394,8 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                 c = get_velocity_corr(p0, p1)
                 Rxt_spectrum_aux.append(c)
                 loc_array.append(x_i)
-            #Integrate exp fit
-            #popt, _ = curve_fit(exp_func, loc_array, Rxt_spectrum_aux) # curve fit to obtain exponential function
-            #loc_fit = np.linspace(min(loc_array), max(loc_array), 50)
-            #Rxt_fit = exp_func(loc_fit, *popt)
-            L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
+
+            L_scale[i] = calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
 
         scale = y[mask_plot_range]
         return L_scale, scale
