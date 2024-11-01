@@ -316,7 +316,7 @@ def get_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='colu
         print('Invalid choice of axis for length scale calculation')
         return None, None
 
-def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='column', direction = 'plus'):
+def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column', direction = 'plus'):
     '''
     Computes the integral length scale along a line.
     
@@ -354,9 +354,9 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='
 
         for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
             if direction == 'plus':
-                mask_integrate_range = (y > y0_i)  # Define the integration range for each point to be plotted
+                mask_integrate_range = (y > y0_i) & ((y < y0_i + 0.5*delta_95)) # Define the integration range for each point to be plotted
             elif direction == 'minus':
-                mask_integrate_range = (y < y0_i)
+                mask_integrate_range = (y < y0_i) & ((y > y0_i - 0.5*delta_95))
             Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
             loc_array = []
 
@@ -368,10 +368,10 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='
                 Rxt_spectrum_aux.append(c)
                 loc_array.append(y_i)
             #Integrate exp fit
-            popt, _ = curve_fit(exp_func, loc_array, Rxt_spectrum_aux) # curve fit to obtain exponential function
-            loc_fit = np.linspace(min(loc_array), max(loc_array), 50)
-            Rxt_fit = exp_func(loc_fit, *popt)
-            L_scale[i] = calculate_length_scale(Rxt_fit, np.array(loc_fit) - loc_fit[0])
+            #popt, _ = curve_fit(exp_func, loc_array, Rxt_spectrum_aux) # curve fit to obtain exponential function
+            #loc_fit = np.linspace(min(loc_array), max(loc_array), 50)
+            #Rxt_fit = exp_func(loc_fit, *popt)
+            L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
 
         scale = y[mask_plot_range]
         return L_scale, scale
@@ -383,9 +383,9 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='
 
         for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
             if direction == 'plus':
-                mask_integrate_range = (x > x0)  # Define the integration range for each point to be plotted
+                mask_integrate_range = (x > x0) & (x < x0 + 0.3*delta_95)  # Define the integration range for each point to be plotted
             elif direction == 'minus':
-                mask_integrate_range = (x < x0)
+                mask_integrate_range = (x < x0) & (x < x0 - 0.5*delta_95)
             Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
             loc_array = []
 
@@ -397,10 +397,10 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, threshold=0.05, axis='
                 Rxt_spectrum_aux.append(c)
                 loc_array.append(x_i)
             #Integrate exp fit
-            popt, _ = curve_fit(exp_func, loc_array, Rxt_spectrum_aux) # curve fit to obtain exponential function
-            loc_fit = np.linspace(min(loc_array), max(loc_array), 50)
-            Rxt_fit = exp_func(loc_fit, *popt)
-            L_scale[i] = calculate_length_scale(Rxt_fit, np.array(loc_fit) - loc_fit[0])
+            #popt, _ = curve_fit(exp_func, loc_array, Rxt_spectrum_aux) # curve fit to obtain exponential function
+            #loc_fit = np.linspace(min(loc_array), max(loc_array), 50)
+            #Rxt_fit = exp_func(loc_fit, *popt)
+            L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
 
         scale = y[mask_plot_range]
         return L_scale, scale

@@ -242,6 +242,7 @@ interval = 20
 levels = np.linspace(-25, 25, 51)
 plt.tight_layout()
 plt.savefig(probe_save_path + 'velocity_corr_contour_0p{}'.format(int(temporal.h_0_bar*100)))
+Rxt_spectrum = []
 
 #Calculate integral length scale 22+
 
@@ -249,7 +250,7 @@ if if_integrate_axis == True:
 	integration_axis_list = ['column','row','column','row']
 	direction_list = ['plus','plus','minus','minus']
 	for i,integration_axis in enumerate(integration_axis_list):
-		L_22, scale = analysis.exp_fit_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,fs,axis=integration_axis,direction = direction_list[i])
+		L_22, scale = analysis.exp_fit_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,fs,delta_95,axis=integration_axis,direction = direction_list[i])
 		L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
 		L_22_df.to_csv(probe_save_path + 'L22_{}_{}'.format(direction_list[i],integration_axis),index=False)
 
