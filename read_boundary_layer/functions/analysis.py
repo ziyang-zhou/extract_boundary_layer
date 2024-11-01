@@ -368,7 +368,10 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                 Rxt_spectrum_aux.append(c)
                 loc_array.append(y_i)
             if len(loc_array) > 0 : 
-                L_scale[i] = calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
+                if direction == 'plus':
+                    L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
+                elif direction == 'minus':
+                    L_scale[i] = calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
             else:
                 L_scale[i] = 0
         scale = y[mask_plot_range]
@@ -395,7 +398,10 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                 Rxt_spectrum_aux.append(c)
                 loc_array.append(x_i)
 
-            L_scale[i] = calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
+            if direction == 'plus':
+                L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
+            elif direction == 'minus':
+                L_scale[i] = calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
 
         scale = y[mask_plot_range]
         return L_scale, scale
