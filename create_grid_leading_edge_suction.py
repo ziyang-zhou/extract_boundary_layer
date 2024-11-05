@@ -122,7 +122,6 @@ plt.plot(xvals,yvals)
 plt.savefig('../mesh/domain_plot.png')
 print('full domain saved')
 # In[6]:
-
 xmin = le_cut
 xmax = te_cut
 
@@ -133,9 +132,6 @@ plt.plot(x_coord[keep],y_coord[keep])
 plt.axis('equal')
 plt.savefig('../mesh/domain_extent.png')
 print('extracted domain saved')
-
-
-
 
 # In[7]:
 
@@ -151,13 +147,11 @@ fx = sintp.interp1d(sprof,xprof)
 fy = sintp.interp1d(sprof,yprof)
 
 # In[8]:
-
 #declaration of dr - step size in new curvilinear array of streamwise coordinate.
-dr = 85e-6/refinement_factor
 zmin = -0.0075776
 zmax = 0.0075776
-voxel_min = (zmax-zmin)/1024
-dr = (zmax-zmin)/170
+npts_chord = eval(settings.at["npts_chord", settings.columns[0]]) # height of first grid cell from wall
+dr = abs(le_cut - te_cut)/npts_chord
 
 # In[9]:
 #resample the curvilinear coordinates to make them equidistant
@@ -216,14 +210,13 @@ plt.axis('equal')
 plt.savefig('../mesh/surface_vector_2.png')
 
 # In[11]:
+dn0 = eval(settings.at["dn0", settings.columns[0]]) # height of first grid cell from wall
+dn_max = eval(settings.at["dn_max", settings.columns[0]]) # Max allowable size of boundary layer grid
+dn_q = eval(settings.at["dn_q", settings.columns[0]]) # growth rate of boundary layer grid
+target_height = eval(settings.at["target_height", settings.columns[0]]) # Target wall height of boundary layer grid
+Nn = eval(settings.at["Nn", settings.columns[0]]) # Min number of cells in boundary layer grid
 
-dn0 = 20e-6
-dn_max = 120e-6
-dn_q = 1.03
-target_height = delta_95 #Target height for data extraction
-Nn = 73
 N_0 = 0
-
 while target_height > N_0:
     Nn += 1
     dn = np.zeros(Nn,)

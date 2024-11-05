@@ -233,9 +233,9 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
 
         for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
             if direction == 'plus':
-                mask_integrate_range = (y > y0_i) & ((y < y0_i + 0.5*delta_95)) # Define the integration range for each point to be plotted
+                mask_integrate_range = (y > y0_i) & ((y < y0_i + delta_95)) # Define the integration range for each point to be plotted
             elif direction == 'minus':
-                mask_integrate_range = (y < y0_i) & ((y > y0_i - 0.5*delta_95))
+                mask_integrate_range = (y < y0_i) & ((y > y0_i - delta_95))
             Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
             loc_array = []
 
@@ -265,9 +265,9 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
 
         for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
             if direction == 'plus':
-                mask_integrate_range = (x > x0) & (x < x0 + 0.3*delta_95)  # Define the integration range for each point to be plotted
+                mask_integrate_range = (x > x0) & (x < x0 + delta_95)  # Define the integration range for each point to be plotted
             elif direction == 'minus':
-                mask_integrate_range = (x < x0) & (x > x0 - 0.5*delta_95)
+                mask_integrate_range = (x < x0) & (x > x0 - delta_95)
             Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
             loc_array = []
 
@@ -344,8 +344,8 @@ def calculate_length_scale(Rxt_fit, loc_fit):
     Returns:
     - Length scale: The result of the integration.
     """
-    # Find the index of the first crossing below -0.05
-    zero_crossing_index = np.where(Rxt_fit < -0.05)[0]
+    # Find the index of the first crossing below 0.05
+    zero_crossing_index = np.where(abs(Rxt_fit) < 0.05)[0]
 
     if zero_crossing_index.size > 0:
         first_zero_index = zero_crossing_index[0]

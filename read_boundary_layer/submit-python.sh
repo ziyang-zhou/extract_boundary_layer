@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --tasks=10
 #SBATCH --cpus-per-task=1
-#SBATCH --time=0-11:50
+#SBATCH --time=0-23:50
 
 source /project/m/moreaust/zzhou/pyenv/pyenv368_vtk/bin/activate
 source /project/m/moreaust/zzhou/antares/v1.18.0/antares.env 
