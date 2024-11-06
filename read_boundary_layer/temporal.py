@@ -18,9 +18,9 @@ nb_points = 150 #no. of wall normal discr points
 axis = 'x'
 axis_direction = 0
 relative_velocity_vec = ['x_velocity', 'y_velocity', 'z_velocity']
-density = '1.225'
-laminar_dynamic_viscosity = '0.0000144'
 density = '1.251'
+kinematic_viscosity = '1.44e-5' # PowerFLOW characteristic kinematic viscosity
+laminar_dynamic_viscosity = '1.8e-05' # PowerFLOW characteristic kinematic viscosity x density
 U_0 = '16.38'
 var = 'U_n' #variable used for the cross correlation contour
 

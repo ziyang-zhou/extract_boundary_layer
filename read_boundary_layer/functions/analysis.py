@@ -192,6 +192,15 @@ def get_velocity_corr(signal_1,signal_2):
         cross_corr= numerator/denominator #normalize velocity signal
         return cross_corr
 
+def get_velocity_cov(signal_1,signal_2):
+        #takes in two signals and outputs the cross-correlation
+        signal_1 = signal_1 - np.mean(signal_1)
+        signal_2 = signal_2 - np.mean(signal_2)
+        signal_1_signal_2 = np.stack((signal_1, signal_2), axis=0)
+        numerator = np.cov(signal_1_signal_2)[0,1]
+        cross_corr= numerator #normalize velocity signal
+        return cross_corr
+
 ###############################################PROCESSING CONTOUR DATA#################################################################
 #Obtain the length scale of vertical velocity fluc L22 given the 2D array representing the cross correlation contour
 

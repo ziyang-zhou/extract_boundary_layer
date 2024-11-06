@@ -1,7 +1,7 @@
 #This script takes boundary layer time histories of u and v velocity components as input and outputs u_rms and v_rms
 
 from antares import *
-from functions import analysis
+from functions import analysis, extract_BL_params
 import vtk
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,21 +16,29 @@ import pdb
 # Defined functions
 # ---------------------
 
-def find_nearest(array, value):
-    array = np.asarray(array)
-    idx = (np.abs(array - value)).argmin()
-    return idx
-
-def calc_rms(u):
-	u_sq  = u**2
-	u_mean_sq = np.mean(u_sq)
-	u_rms = np.sqrt(u_mean_sq)
-	return u_rms
-
-def find_nearest_index(array, value):
-    array = np.asarray(array)
-    idx = (np.abs(array - value)).argmin()
-    return idx
+def fit_and_derivative(x, y, degree=1):
+    """
+    Fits the given data (x, y) to a polynomial of the specified degree,
+    and computes its first derivative.
+    
+    Parameters:
+    - x: Independent variable (input data).
+    - y: Dependent variable (data to fit).
+    - degree: The degree of the polynomial to fit (default is 1 for linear).
+    
+    Returns:
+    - p: Coefficients of the fitted polynomial.
+    - first_derivative: The first derivative of the polynomial at each x.
+    """
+    # Fit the data to a polynomial of the specified degree
+    p = np.polyfit(x, y, degree)  # p contains the polynomial coefficients
+    # Create the polynomial from the coefficients
+    poly = np.poly1d(p)
+    # Compute the first derivative of the polynomial
+    poly_derivative = poly.deriv(1)  # First derivative of the polynomial
+    # Calculate the values of the first derivative at each x
+    first_derivative = poly_derivative(x)
+    return p, first_derivative
 
 # ------------------
 # Reading the files
@@ -41,11 +49,13 @@ delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary
 
 mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
+bl_save_path = temporal.project_path + 'boundary_layer_profile/'
+
 nb_points = temporal.nb_points #number of points across the boundary layer
-var = 'U_n' #variable used for the cross correlation contour
+var_list = ['U_n','U_t','static_pressure','density','mag_velocity_rel'] #variable used for the cross correlation contour
 timestep_size = temporal.timestep_size
-xcoor0 = -0.019227 # x location of the integration axis
 if_interpolate = True
+kinematic_viscosity = temporal.kinematic_viscosity
 
 # Set the total number of timesteps and the number of chunks
 step_per_chunk = temporal.step_per_chunk
@@ -53,6 +63,7 @@ total_timesteps = temporal.total_timesteps
 starting_timestep = temporal.starting_timestep
 num_chunks = (total_timesteps - starting_timestep) // step_per_chunk
 
+os.makedirs(bl_save_path, exist_ok=True)
 
 #Read the mesh
 r=Reader('hdf_antares')
@@ -60,87 +71,128 @@ r['filename'] = mesh_read_path + 'interpolation_3d_grid.h5'
 BL_line_geom=r.read()
 print('shape of BL line geom',BL_line_geom[0][0]['x'].shape)
 
-#For every timestep form a 2D matrix of velocities (wall normal , streamwise)
-#Array dim : 1 is time, 2 is wall normal and 3 is chordwise
-for j in range(num_chunks):
-	#Read the boundary layer history at x_loc
-	r = Reader('hdf_antares')
-	r['filename'] = 'BL_line_prof/BL_line_prof_{}_{}.h5'.format(starting_timestep+j*step_per_chunk,starting_timestep+(j+1)*(step_per_chunk))
-	BL_line_prof = r.read()
-  
-	if j == 0:
-		#creation of streamwise distance array
-		xcoor = BL_line_geom[0][0]['x'][:,0,0]
-		ycoor = BL_line_geom[0][0]['y'][:,0,0] 
-		ds = np.sqrt((xcoor[1:]-xcoor[:-1])**2 + (ycoor[1:]-ycoor[:-1])**2)
-		sprof = np.zeros(ds.size+1,)
-		sprof[1:] = np.cumsum(ds)
-		scoor = sprof
+print('Loading data...')
+data_dict = {}
+for var in var_list:
+	#For every timestep form a 2D matrix of velocities (wall normal , streamwise)
+	#Array dim : 1 is time, 2 is wall normal and 3 is chordwise
+	for j in range(num_chunks):
+		#Read the boundary layer history at x_loc
+		r = Reader('hdf_antares')
+		r['filename'] = bl_read_path + 'BL_line_prof_{}_{}.h5'.format(starting_timestep+j*step_per_chunk,starting_timestep+(j+1)*(step_per_chunk))
+		BL_line_prof = r.read()
+	
+		if j == 0:
+			#creation of streamwise distance array
+			xcoor = BL_line_geom[0][0]['x'][:,0,0]
+			ycoor = BL_line_geom[0][0]['y'][:,0,0] 
+			ds = np.sqrt((xcoor[1:]-xcoor[:-1])**2 + (ycoor[1:]-ycoor[:-1])**2)
+			sprof = np.zeros(ds.size+1,)
+			sprof[1:] = np.cumsum(ds)
+			scoor = sprof
 
-		hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance
+			hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance
 
-	for n,i in enumerate(BL_line_prof[0].keys()[1:]):
-		for m in range(len(xcoor)):  # read all spatial locations in the current timestep
-			profile_append = np.array(BL_line_prof[0][i][var][m])
-			if (m==0):
-				profile = profile_append #Create the data to be appended by concatenating the wall normal profiles for each x location
-			elif (m==1):
-				profile = np.concatenate((profile[:,np.newaxis], profile_append[:,np.newaxis]), axis=1)
-			else :
-				profile = np.concatenate((profile, profile_append[:,np.newaxis]), axis=1)
+		for n,i in enumerate(BL_line_prof[0].keys()[1:]):
+			for m in range(len(xcoor)):  # read all spatial locations in the current timestep
+				profile_append = np.array(BL_line_prof[0][i][var][m])
+				if (m==0):
+					profile = profile_append #Create the data to be appended by concatenating the wall normal profiles for each x location
+				elif (m==1):
+					profile = np.concatenate((profile[:,np.newaxis], profile_append[:,np.newaxis]), axis=1)
+				else :
+					profile = np.concatenate((profile, profile_append[:,np.newaxis]), axis=1)
 
-		data_append = profile
-		if (n == 0) and (j == 0):
-			data = data_append
-		elif (n == 1) and (j == 0):
-			data = np.concatenate((data[np.newaxis,:,:], data_append[np.newaxis,:,:]), axis=0)
-		else:
-			data = np.concatenate((data, data_append[np.newaxis,:,:]), axis=0)
+			data_append = profile
+			if (n == 0) and (j == 0):
+				data = data_append
+			elif (n == 1) and (j == 0):
+				data = np.concatenate((data[np.newaxis,:,:], data_append[np.newaxis,:,:]), axis=0)
+			else:
+				data = np.concatenate((data, data_append[np.newaxis,:,:]), axis=0)
 
-	print('data shape is {}'.format(np.shape(data)))
-	print('chunk {} read'.format(j))
+		print('data shape is {}'.format(np.shape(data)))
+		print('chunk {} read'.format(j))
 
-if if_interpolate == True:
-	for ki in range(0,np.shape(data)[2]-1):
-		for t in range(0,np.shape(data)[0]-1):
-			i_zero = np.where(abs(data[t,:,ki]) == 0)[0]
-			for i in i_zero:
-				if i+1 not in i_zero:
-					data[t,i,ki] = (data[t,i-1,ki] + data[t,i+1,ki])/2
-				else:
-					#Obtain the next non-zero value for interpolation
-					n=0
-					while (data[t,i+n,ki]==0):
-						n+=1
-					data[t,i,ki] = (data[t,i-1,ki] + data[t,i+n,ki])/2
+	if if_interpolate == True:
+		for ki in range(0,np.shape(data)[2]-1):
+			for t in range(0,np.shape(data)[0]-1):
+				i_zero = np.where(abs(data[t,:,ki]) == 0)[0]
+				for i in i_zero:
+					if i+1 not in i_zero:
+						data[t,i,ki] = (data[t,i-1,ki] + data[t,i+1,ki])/2
+					else:
+						#Obtain the next non-zero value for interpolation
+						n=0
+						while (data[t,i+n,ki]==0):
+							n+=1
+						data[t,i,ki] = (data[t,i-1,ki] + data[t,i+n,ki])/2
 
+	data_dict[var] = data
 # ------------------------------
-# Turbulence calculation
+# Parameter calculation
 # ------------------------------
 
-nbi = data.shape[0]
-meandata = data.mean(axis=0,dtype=np.float64)
+# Compute reynolds stress
+data_dict['Ut_mean'] = data_dict['U_t'].mean(axis=0,dtype=np.float64)
+data_dict['Un_mean'] = data_dict['U_n'].mean(axis=0,dtype=np.float64)
 
+nbi = data['static_pressure'].shape[0] # number of instants
 #Compute the arithmetic mean along the specified axis.
-datafluc = data - np.tile(meandata,(nbi,1,1))
-datarms = np.zeros((hcoor.shape[0],scoor.shape[0]))
+data_dict['Ut_fluc'] = data_dict['U_t'] - np.tile(data_dict['Ut_mean'],(nbi,1,1))
+data_dict['Un_fluc'] = data_dict['U_n'] - np.tile(data_dict['Un_mean'],(nbi,1,1))
+
+data_dict['uv_fluc'] = np.zeros((hcoor.shape[0],scoor.shape[0]))
 #Define the x and y coord array
 S,H =np.meshgrid(scoor,hcoor)
 
+print('Computing reynolds stress in the boundary layer...')
+
 #Calculate the rms for each point in space
-for ki in range(0,np.shape(datafluc)[2]):                                          #streamwise index_point
-	for l in range(0,np.shape(datafluc)[1]):                                       #wall normal index_point
-		u_prime = datafluc[:,l,ki]
-		datarms[l,ki] = calc_rms(u_prime)
+for istreamwise in range(0,np.shape(data_dict['uv_fluc'])[2]):                                          #streamwise index_point
+	for iwallnormal in range(0,np.shape(data_dict['uv_fluc'])[1]):                                       #wall normal index_point
+		U_n = data_dict['Un_fluc'][:,iwallnormal,istreamwise]
+		U_t = data_dict['Ut_fluc'][:,iwallnormal,istreamwise]
+		data_dict['uv_mean'][iwallnormal,istreamwise] = analysis.get_velocity_cov(U_n,U_t)
 
-base_stat = Base()
-base_stat['0'] = Zone()
-base_stat['0']['0'] = Instant()
-base_stat['0'].shared['s_coord'] = S
-base_stat['0'].shared['h_coord'] = H
-base_stat['0'].shared['u_rms'] = datarms
+# Compute delta_95, momentum thickness and displacement thickness
+delta_95, delta_theta, delta_star, beta_c, RT = tuple(np.zeros(len(scoor)) for _ in range(5))
+data_dict['static_pressure_mean'] = data_dict['static_pressure'].mean(axis=0,dtype=np.float64)
+data_dict['density_mean'] = data_dict['density'].mean(axis=0,dtype=np.float64)
+data_dict['mag_velocity_rel_mean'] = data_dict['mag_velocity_rel'].mean(axis=0,dtype=np.float64)
 
-myw = Writer('hdf_antares')
-myw['filename'] = 'BL_line_prof/{}_rms'.format(var)
-myw['base'] = base_stat
-myw.dump()
+print('Computing pressure gradient...')
+data_dict['dpds'] = fit_and_derivative(scoor, data_dict['static_pressure_mean'][0,:], degree=1)
+
+print('Computing parameter of the boundary layer...')
+
+for istreamwise in scoor:
+	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*data_dict['density_mean'][:,istreamwise]*(data_dict['mag_velocity_rel'][:,istreamwise]**2)
+	total_pressure = total_pressure - total_pressure[0]
+	density = data_dict['density_mean'][:,istreamwise]
+	U_t = data_dict['Ut_mean'][:,istreamwise]
+	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
+	q = 0.5*density*mag_velocity_rel**2
+	idx_delta_95,delta_95[istreamwise] = extract_BL_params.get_delta95(hcoor,total_pressure)
+	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
+	tau_wall = extract_BL_params.get_wall_shear_stress_from_line(hcoor,mag_velocity_rel,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3, npts_interp=100,maximum_stress=False)
+	beta_c[istreamwise] = delta_theta[istreamwise]/tau_wall*data_dict['dpds'][istreamwise]
+	u_tau = np.sqrt(tau_wall/density)
+	cf = u_tau/q
+	RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf/2)
+	bl_data = {
+		'wall normal location' : hcoor,
+		'U_t': U_t,
+	}
+	bl_data.to_csv(bl_save_path + 'BL_{}.csv'.format(str(istreamwise).zfill(3)))
+
+# Save boundary layer info
+surface_data = {
+	'streamwise location' : scoor,
+    'delta_95': delta_95,
+    'delta_theta': delta_theta,
+    'delta_star': delta_star,
+    'beta_c': beta_c,
+    'RT': RT
+}
+surface_data.to_csv(bl_save_path + 'surface_parameter.csv'.format(str(istreamwise).zfill(3)))

@@ -22,7 +22,6 @@ settings = pd.read_csv("setting.csv", index_col= 0)
 le_cut = eval(settings.at["le_cut", settings.columns[0]])
 te_cut = eval(settings.at["te_cut", settings.columns[0]])
 include_pressure_side = settings.at["include_pressure_side", settings.columns[0]]
-refinement_factor = eval(settings.at["refinement_factor", settings.columns[0]])
 delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary layer thickness
 
 file = '../mesh/tr-meas-surface_first_70511.hdf5'

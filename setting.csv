@@ -27,11 +27,10 @@ U_ref_list,"[16.75,16.72,16.63]"
 le_cut,-0.081,#leading edge limit of extraction - probe 7 : -0.809
 te_cut,-0.0,#trailing edge limit of extraction
 include_pressure_side,FALSE,#whether or not to include the pressure side in the grid
-refinement_factor,10,#increase this factor if original resolution is not fine enough
 delta_95,0.00557875260710716,#The boundary layer thickness based on total pressure in m
 npts_chord,118,# Number of points to discretize grid into in the chordwise direction
 dn0 = 20e-6,# height of first grid cell from wall
 dn_max = 120e-6,# Max allowable size of boundary layer grid
 dn_q = 1.03,# growth rate of boundary layer grid
-target_height = 0.006, #Target height for boundary layer data extraction (m)
+target_height = 0.007, #Target height for boundary layer data extraction (m)
 Nn = 73,# Min number of cells in boundary layer grid

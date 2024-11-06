@@ -248,7 +248,6 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
       pt2=pt1+length_extraction*n_vec
 
       if non_uniform and factor_spacing is not None: #use of antares to interpolate data over the BL line
-
         t=Treatment('tanhline')
         t['base']=b_vol
         t['point1']=pt1
@@ -260,7 +259,6 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
         line=t.execute()
 
       else:
-
         t=Treatment('line')
         t['base']=b_vol
         t['point1']=pt1
@@ -323,10 +321,6 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
     for it in range(nb_inst):
       print('instance',it,'read')
       for iv,var in enumerate(var_list):
-        #print('iv',iv)
-        #print('var',var)
-        #print('var_list',var_list)
-        #print('data_BL',data_BL[:,:,iv,it])
         BL_line_prof[zn][it][var]=data_BL[:,:,iv,it]
 
       # Correct wall value
@@ -380,7 +374,7 @@ def compute_BL_params(BL_line_prof,var_detection,delta_pct_end=0.85,npts_interp=
         rho_e=BL_line_prof[zn][inst]['density'][il,idx]
 
         if flag_compute_tau_wall:
-          tau_wall=extract_BL_params.get_wall_shear_stress_from_line(BL_line_prof[zn][0]['h'][il,:],BL_line_prof[zn][inst]['U_t'][il,:],BL_line_prof[zn][inst]['density'][il,:],BL_line_prof[zn][inst]['nu_lam'][il,:],filter_size_var=filter_size_T,filter_size_der=filter_size_der,npts_interp=npts_interp)
+          tau_wall=get_wall_shear_stress_from_line(BL_line_prof[zn][0]['h'][il,:],BL_line_prof[zn][inst]['U_t'][il,:],BL_line_prof[zn][inst]['density'][il,:],BL_line_prof[zn][inst]['nu_lam'][il,:],filter_size_var=filter_size_T,filter_size_der=filter_size_der,npts_interp=npts_interp)
 
 
         BL_param[zn][inst]['exterior_stream_velocity'][il]=U_e
