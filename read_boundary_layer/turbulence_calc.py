@@ -16,7 +16,7 @@ import pdb
 # Defined functions
 # ---------------------
 
-def fit_and_derivative(x, y, degree=1):
+def fit_and_derivative(x, y, degree=3):
     """
     Fits the given data (x, y) to a polynomial of the specified degree,
     and computes its first derivative.
@@ -55,7 +55,7 @@ nb_points = temporal.nb_points #number of points across the boundary layer
 var_list = ['U_n','U_t','static_pressure','density','mag_velocity_rel'] #variable used for the cross correlation contour
 timestep_size = temporal.timestep_size
 if_interpolate = True
-kinematic_viscosity = temporal.kinematic_viscosity
+kinematic_viscosity = eval(temporal.kinematic_viscosity)
 
 # Set the total number of timesteps and the number of chunks
 step_per_chunk = temporal.step_per_chunk
@@ -137,20 +137,20 @@ for var in var_list:
 data_dict['Ut_mean'] = data_dict['U_t'].mean(axis=0,dtype=np.float64)
 data_dict['Un_mean'] = data_dict['U_n'].mean(axis=0,dtype=np.float64)
 
-nbi = data['static_pressure'].shape[0] # number of instants
+nbi = data_dict['static_pressure'].shape[0] # number of instants
 #Compute the arithmetic mean along the specified axis.
 data_dict['Ut_fluc'] = data_dict['U_t'] - np.tile(data_dict['Ut_mean'],(nbi,1,1))
 data_dict['Un_fluc'] = data_dict['U_n'] - np.tile(data_dict['Un_mean'],(nbi,1,1))
 
-data_dict['uv_fluc'] = np.zeros((hcoor.shape[0],scoor.shape[0]))
+data_dict['uv_fluc'],data_dict['uv_mean'] = np.zeros((hcoor.shape[0],scoor.shape[0])),np.zeros((hcoor.shape[0],scoor.shape[0]))
 #Define the x and y coord array
 S,H =np.meshgrid(scoor,hcoor)
 
 print('Computing reynolds stress in the boundary layer...')
 
 #Calculate the rms for each point in space
-for istreamwise in range(0,np.shape(data_dict['uv_fluc'])[2]):                                          #streamwise index_point
-	for iwallnormal in range(0,np.shape(data_dict['uv_fluc'])[1]):                                       #wall normal index_point
+for istreamwise in range(0,np.shape(data_dict['uv_fluc'])[1]):                                          #streamwise index_point
+	for iwallnormal in range(0,np.shape(data_dict['uv_fluc'])[0]):                                       #wall normal index_point
 		U_n = data_dict['Un_fluc'][:,iwallnormal,istreamwise]
 		U_t = data_dict['Ut_fluc'][:,iwallnormal,istreamwise]
 		data_dict['uv_mean'][iwallnormal,istreamwise] = analysis.get_velocity_cov(U_n,U_t)
@@ -162,37 +162,37 @@ data_dict['density_mean'] = data_dict['density'].mean(axis=0,dtype=np.float64)
 data_dict['mag_velocity_rel_mean'] = data_dict['mag_velocity_rel'].mean(axis=0,dtype=np.float64)
 
 print('Computing pressure gradient...')
-data_dict['dpds'] = fit_and_derivative(scoor, data_dict['static_pressure_mean'][0,:], degree=1)
+_, data_dict['dpds'] = fit_and_derivative(scoor[:-1], data_dict['static_pressure_mean'][0,:-1], degree=1)
 
 print('Computing parameter of the boundary layer...')
 
-for istreamwise in scoor:
-	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*data_dict['density_mean'][:,istreamwise]*(data_dict['mag_velocity_rel'][:,istreamwise]**2)
+for istreamwise,streamwise_coor in enumerate(scoor):
+	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*data_dict['density_mean'][:,istreamwise]*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
 	total_pressure = total_pressure - total_pressure[0]
-	density = data_dict['density_mean'][:,istreamwise]
+	density = data_dict['density_mean'][:,istreamwise][0]
 	U_t = data_dict['Ut_mean'][:,istreamwise]
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
-	q = 0.5*density*mag_velocity_rel**2
 	idx_delta_95,delta_95[istreamwise] = extract_BL_params.get_delta95(hcoor,total_pressure)
+	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
 	tau_wall = extract_BL_params.get_wall_shear_stress_from_line(hcoor,mag_velocity_rel,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3, npts_interp=100,maximum_stress=False)
 	beta_c[istreamwise] = delta_theta[istreamwise]/tau_wall*data_dict['dpds'][istreamwise]
 	u_tau = np.sqrt(tau_wall/density)
 	cf = u_tau/q
 	RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf/2)
-	bl_data = {
+	bl_data = pd.DataFrame({
 		'wall normal location' : hcoor,
 		'U_t': U_t,
-	}
+	})
 	bl_data.to_csv(bl_save_path + 'BL_{}.csv'.format(str(istreamwise).zfill(3)))
 
 # Save boundary layer info
-surface_data = {
+surface_data = pd.DataFrame({
 	'streamwise location' : scoor,
     'delta_95': delta_95,
     'delta_theta': delta_theta,
     'delta_star': delta_star,
     'beta_c': beta_c,
     'RT': RT
-}
+})
 surface_data.to_csv(bl_save_path + 'surface_parameter.csv'.format(str(istreamwise).zfill(3)))

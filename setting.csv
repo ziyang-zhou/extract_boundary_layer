@@ -25,7 +25,7 @@ n_periods,5,#number of periods to resolve minimum frequency
 U_ref_list,"[16.75,16.72,16.63]"
 ########## Geometry extraction ############,,,,,,,,
 le_cut,-0.081,#leading edge limit of extraction - probe 7 : -0.809
-te_cut,-0.0,#trailing edge limit of extraction
+te_cut,-0.003,#trailing edge limit of extraction
 include_pressure_side,FALSE,#whether or not to include the pressure side in the grid
 delta_95,0.00557875260710716,#The boundary layer thickness based on total pressure in m
 npts_chord,118,# Number of points to discretize grid into in the chordwise direction
