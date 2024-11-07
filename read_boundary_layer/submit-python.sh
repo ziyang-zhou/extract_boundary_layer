@@ -8,6 +8,6 @@
 
 source /project/m/moreaust/zzhou/pyenv/pyenv368_vtk/bin/activate
 source /project/m/moreaust/zzhou/antares/v1.18.0/antares.env 
-#python extract_boundary_layer.py
-#python read_base_volume.py
-python calc_correlation.py
+#python 02-extract_boundary_layer.py
+#python 01-read_base_volume.py
+python 04-calc_correlation.py

@@ -39,7 +39,8 @@ te_cut = eval(settings.at["te_cut", settings.columns[0]])
 
 project_path = temporal.project_path
 mesh_read_path = temporal.mesh_path
-bl_read_path = temporal.bl_path
+bl_read_path = temporal.bl_path #Place to read BL_prof base
+bl_save_path = temporal.project_path + 'boundary_layer_profile/' #Place to save boundary layer dataframe
 result_save_path = project_path + 'result/'
 
 probe_number = temporal.probe_number
@@ -218,8 +219,8 @@ for ki in range(0,np.shape(pfluc)[2]-1):                                        
 	for l in range(0,np.shape(pfluc)[1]-1):                                       #wall normal index_point
 		p1 = pfluc[:,l,ki]
 		p0 = pfluc[:,l0,ki0]
-		#p1 = butter_bandpass_filter(p1, 1000, 8000, fs, order=5)
-		#p0 = butter_bandpass_filter(p0, 1000, 8000, fs, order=5)
+		p1 = butter_bandpass_filter(p1, 1600, 8000, fs, order=5)
+		p0 = butter_bandpass_filter(p0, 1600, 8000, fs, order=5)
 		c = analysis.get_velocity_corr(p0,p1)
 		Rxt_spectrum[l,ki] = c
 
@@ -245,7 +246,6 @@ plt.savefig(probe_save_path + 'velocity_corr_contour_0p{}'.format(int(temporal.h
 Rxt_spectrum = []
 
 #Calculate integral length scale 22+
-
 if if_integrate_axis == True:
 	integration_axis_list = ['column','row','column','row']
 	direction_list = ['plus','plus','minus','minus']
@@ -254,28 +254,19 @@ if if_integrate_axis == True:
 		L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})
 		L_22_df.to_csv(probe_save_path + 'L22_{}_{}'.format(direction_list[i],integration_axis),index=False)
 
+#Calculate integral length scale 22+ field
+bl_param = pd.read_csv(bl_save_path + 'surface_parameter.csv')
 if if_integrate_field == True:
-	L_22_field = np.zeros((len(h_masked),len(scoor))) # Initialize array to store L22 field at airfoil midplane
+	L_22_dict = {} # Initialize dict to store L22 field
 	# Compute the integral length scale along the wall normal direction for each streamwise point
 	for i,x0_aux in enumerate(xcoor):
-		ki0_aux = analysis.find_nearest(xcoor,x0_aux) #streamwise coordinate of fixed point
-		L_22_aux, scale_aux = analysis.exp_fit_length_scale(pfluc,scoor,hcoor,scoor[ki0_aux],h_start,scoor[ki0_aux],h_end,axis='column',direction = 'plus')
-		L_22_field[:,i] = L_22_aux
-
-	#Save integral length scale field as h5
-	base_int_scale = Base()
-	base_int_scale['0'] = Zone()
-	base_int_scale['0']['0'] = Instant()
-	base_int_scale['0'].shared['x_coord'] = xcoor
-	base_int_scale['0'].shared['h_coord'] = hcoor[h_mask_plot_range] #mask hcoor to scope of the integral length scale plot
-	base_int_scale['0'].shared['u_rms'] = L_22_field
-	myw = Writer('hdf_antares')
-	myw['filename'] = temporal.project_path + 'int_scale_field'
-	myw['base'] = base_int_scale
-	myw.dump()
+		L_22_aux, _ = analysis.exp_fit_length_scale(pfluc,scoor,hcoor,scoor[i],h_start,scoor[i],h_end,axis='column',direction = 'plus')
+		delta_95 = bl_param['delta_95'][i]
+		L_22_dict['hcoor/delta_95'] = hcoor/delta_95
+		L_22_dict['L22/delta_95'] = L_22_aux/delta_95
+		L_22_df.to_csv(bl_save_path + 'L22_profile_{}.csv'.format(str(i).zfill(3)))
 
 #Plot the contour
-
 if troubleshoot == True:
 	levels = np.linspace(-3.5, 3.5, 21)  # 20 levels from 0 to 10
 	cmap = 'rainbow'

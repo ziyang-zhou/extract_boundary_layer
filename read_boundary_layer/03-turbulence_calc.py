@@ -142,7 +142,7 @@ nbi = data_dict['static_pressure'].shape[0] # number of instants
 data_dict['Ut_fluc'] = data_dict['U_t'] - np.tile(data_dict['Ut_mean'],(nbi,1,1))
 data_dict['Un_fluc'] = data_dict['U_n'] - np.tile(data_dict['Un_mean'],(nbi,1,1))
 
-data_dict['uv_fluc'],data_dict['uv_mean'] = np.zeros((hcoor.shape[0],scoor.shape[0])),np.zeros((hcoor.shape[0],scoor.shape[0]))
+data_dict['uu_mean'],data_dict['vv_mean'],data_dict['uv_mean'] = np.zeros((hcoor.shape[0],scoor.shape[0])),np.zeros((hcoor.shape[0],scoor.shape[0])),np.zeros((hcoor.shape[0],scoor.shape[0]))
 #Define the x and y coord array
 S,H =np.meshgrid(scoor,hcoor)
 
@@ -153,10 +153,10 @@ for istreamwise in range(0,np.shape(data_dict['uv_fluc'])[1]):                  
 	for iwallnormal in range(0,np.shape(data_dict['uv_fluc'])[0]):                                       #wall normal index_point
 		U_n = data_dict['Un_fluc'][:,iwallnormal,istreamwise]
 		U_t = data_dict['Ut_fluc'][:,iwallnormal,istreamwise]
-		data_dict['uv_mean'][iwallnormal,istreamwise] = analysis.get_velocity_cov(U_n,U_t)
+		data_dict['uu_mean'][iwallnormal,istreamwise],data_dict['vv_mean'][iwallnormal,istreamwise],data_dict['uv_mean'][iwallnormal,istreamwise] = analysis.get_velocity_cov(U_t,U_n)
 
 # Compute delta_95, momentum thickness and displacement thickness
-delta_95, delta_theta, delta_star, beta_c, RT = tuple(np.zeros(len(scoor)) for _ in range(5))
+delta_95, delta_theta, delta_star, beta_c, RT, cf = tuple(np.zeros(len(scoor)) for _ in range(6))
 data_dict['static_pressure_mean'] = data_dict['static_pressure'].mean(axis=0,dtype=np.float64)
 data_dict['density_mean'] = data_dict['density'].mean(axis=0,dtype=np.float64)
 data_dict['mag_velocity_rel_mean'] = data_dict['mag_velocity_rel'].mean(axis=0,dtype=np.float64)
@@ -172,17 +172,24 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	density = data_dict['density_mean'][:,istreamwise][0]
 	U_t = data_dict['Ut_mean'][:,istreamwise]
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
+	dudy = np.zeros(np.size(mag_velocity_rel)-1)
+	dudy = np.diff(U_t)/np.diff(hcoor)
+
 	idx_delta_95,delta_95[istreamwise] = extract_BL_params.get_delta95(hcoor,total_pressure)
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
 	tau_wall = extract_BL_params.get_wall_shear_stress_from_line(hcoor,mag_velocity_rel,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3, npts_interp=100,maximum_stress=False)
 	beta_c[istreamwise] = delta_theta[istreamwise]/tau_wall*data_dict['dpds'][istreamwise]
 	u_tau = np.sqrt(tau_wall/density)
-	cf = u_tau/q
-	RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf/2)
+	cf[istreamwise] = tau_wall/q
+	RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf[istreamwise]/2)
 	bl_data = pd.DataFrame({
 		'wall normal location' : hcoor,
-		'U_t': U_t,
+		'U_t' : U_t,
+		'dudy' : dudy,
+		'uu_mean' : data_dict['uu_mean'][:,istreamwise],
+		'vv_mean' : data_dict['vv_mean'][:,istreamwise],
+		'uv_mean' : data_dict['uv_mean'][:,istreamwise]
 	})
 	bl_data.to_csv(bl_save_path + 'BL_{}.csv'.format(str(istreamwise).zfill(3)))
 
@@ -193,6 +200,8 @@ surface_data = pd.DataFrame({
     'delta_theta': delta_theta,
     'delta_star': delta_star,
     'beta_c': beta_c,
-    'RT': RT
+    'RT': RT,
+	'dpds' : data_dict['dpds'],
+	'cf' : cf
 })
-surface_data.to_csv(bl_save_path + 'surface_parameter.csv'.format(str(istreamwise).zfill(3)))
+surface_data.to_csv(bl_save_path + 'surface_parameter.csv')

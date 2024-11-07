@@ -74,7 +74,7 @@ def area_weighting(value, area):
     for i in range(num_rows):
         # Use the weights to compute the weighted average for the i-th row
         weighted_values[i,:] = np.dot(value[i, :], weights)
-    return weighted_valuesnp.array
+    return weighted_values
     
 file = 'tr-meas-surface.hdf5'
 fd = h5py.File(file,'r')
