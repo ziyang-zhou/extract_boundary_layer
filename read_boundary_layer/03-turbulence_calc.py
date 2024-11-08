@@ -47,6 +47,8 @@ def fit_and_derivative(x, y, degree=3):
 settings = pd.read_csv("../setting.csv", index_col= 0)
 delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary layer thickness
 
+case_name = 'L08'
+
 mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
 bl_save_path = temporal.project_path + 'boundary_layer_profile/'
@@ -70,6 +72,14 @@ r=Reader('hdf_antares')
 r['filename'] = mesh_read_path + 'interpolation_3d_grid.h5'
 BL_line_geom=r.read()
 print('shape of BL line geom',BL_line_geom[0][0]['x'].shape)
+
+print('Loading geometry...')
+coordinates_df = {}
+coordinates_df['xBL'] = BL_line_geom[0][0]['x'][:,0,0]/0.1356 + 1.0
+coordinates_df['yBL'] = BL_line_geom[0][0]['y'][:,0,0]/0.1356
+coordinates_df = pd.DataFrame(coordinates_df)
+coordinates_df.index.name = 'idxBL'
+coordinates_df.to_csv(bl_save_path + '{}_coordinates.csv'.format(case_name))
 
 print('Loading data...')
 data_dict = {}
@@ -193,7 +203,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		'vv_mean' : data_dict['vv_mean'][:,istreamwise],
 		'uv_mean' : data_dict['uv_mean'][:,istreamwise]
 	})
-	bl_data.to_csv(bl_save_path + 'BL_{}.csv'.format(str(istreamwise).zfill(3)))
+	bl_data.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,istreamwise).zfill(3))
 
 # Save boundary layer info
 surface_data = pd.DataFrame({
