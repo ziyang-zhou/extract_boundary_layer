@@ -196,7 +196,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	cf[istreamwise] = tau_wall/q
 	RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf[istreamwise]/2)
 	bl_data = pd.DataFrame({
-		'wall normal location' : hcoor,
+		'h' : hcoor,
 		'U_t' : U_t,
 		'dudy' : dudy_interp,
 		'uu_mean' : data_dict['uu_mean'][:,istreamwise],
