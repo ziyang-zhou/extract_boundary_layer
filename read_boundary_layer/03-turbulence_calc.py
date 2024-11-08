@@ -149,8 +149,8 @@ S,H =np.meshgrid(scoor,hcoor)
 print('Computing reynolds stress in the boundary layer...')
 
 #Calculate the rms for each point in space
-for istreamwise in range(0,np.shape(data_dict['uv_fluc'])[1]):                                          #streamwise index_point
-	for iwallnormal in range(0,np.shape(data_dict['uv_fluc'])[0]):                                       #wall normal index_point
+for istreamwise in range(0,np.shape(data_dict['uv_mean'])[1]):                                          #streamwise index_point
+	for iwallnormal in range(0,np.shape(data_dict['uv_mean'])[0]):                                       #wall normal index_point
 		U_n = data_dict['Un_fluc'][:,iwallnormal,istreamwise]
 		U_t = data_dict['Ut_fluc'][:,iwallnormal,istreamwise]
 		data_dict['uu_mean'][iwallnormal,istreamwise],data_dict['vv_mean'][iwallnormal,istreamwise],data_dict['uv_mean'][iwallnormal,istreamwise] = analysis.get_velocity_cov(U_t,U_n)
@@ -162,7 +162,8 @@ data_dict['density_mean'] = data_dict['density'].mean(axis=0,dtype=np.float64)
 data_dict['mag_velocity_rel_mean'] = data_dict['mag_velocity_rel'].mean(axis=0,dtype=np.float64)
 
 print('Computing pressure gradient...')
-_, data_dict['dpds'] = fit_and_derivative(scoor[:-1], data_dict['static_pressure_mean'][0,:-1], degree=1)
+_, data_dict['dpds'] = fit_and_derivative(scoor[:-1], data_dict['static_pressure_mean'][0,:-1], degree=3) # last element in streamwise direction ommitted due to erroneous extraction.
+data_dict['dpds'] = np.interp(scoor,scoor[:-1],data_dict['dpds'])
 
 print('Computing parameter of the boundary layer...')
 
@@ -174,6 +175,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
 	dudy = np.zeros(np.size(mag_velocity_rel)-1)
 	dudy = np.diff(U_t)/np.diff(hcoor)
+	dudy_interp = np.interp(hcoor,hcoor[:-1]+np.diff(hcoor)/2,dudy)
 
 	idx_delta_95,delta_95[istreamwise] = extract_BL_params.get_delta95(hcoor,total_pressure)
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
@@ -186,7 +188,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	bl_data = pd.DataFrame({
 		'wall normal location' : hcoor,
 		'U_t' : U_t,
-		'dudy' : dudy,
+		'dudy' : dudy_interp,
 		'uu_mean' : data_dict['uu_mean'][:,istreamwise],
 		'vv_mean' : data_dict['vv_mean'][:,istreamwise],
 		'uv_mean' : data_dict['uv_mean'][:,istreamwise]

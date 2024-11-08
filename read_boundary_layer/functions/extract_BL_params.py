@@ -144,8 +144,6 @@ def get_boundary_layer_thicknesses_from_line(wall_distance,relative_velocity_mag
   delta_star=trapz(f1[f1_positive],wall_distance[:idx_delta99][f1_positive])
   delta_theta=trapz(f2[f2_positive],wall_distance[:idx_delta99][f2_positive])
 
-  print('Displacement boundary layer thickness: {0:f}'.format(delta_star))
-  print('Momentum boundary layer thickness: {0:f}'.format(delta_theta))
   return delta_star,delta_theta
 
 def get_wall_shear_stress_from_line(wall_distance,relative_velocity_magnitude,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=100,maximum_stress=False):
