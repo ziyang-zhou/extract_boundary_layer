@@ -11,6 +11,10 @@ import pdb
 vol_path = temporal.vol_path
 bl_path = temporal.bl_path
 mesh_path = temporal.mesh_path
+
+os.makedirs(bl_path, exist_ok=True)
+os.makedirs(vol_path, exist_ok=True)
+
 # Read the number of nodes from the SLURM environment variable
 num_processes = int(os.environ.get("SLURM_NTASKS_PER_NODE", "1"))
 #Extraction parameter
@@ -39,8 +43,8 @@ def process_chunk(chunk_start, chunk_end):
     print('variables in each instant of b_vol', b_vol[0][0].keys())
     BL_line_prof, successful_extraction = extract_BL_params.extract_BL_profiles(
         b_vol, BL_line_geom, length_extraction, var_detection, nb_points,
-        axis, axis_direction, relative_velocity_vec, temporal.density,
-        laminar_dynamic_viscosity=temporal.laminar_dynamic_viscosity
+        axis, axis_direction, relative_velocity_vec, str(temporal.density),
+        laminar_dynamic_viscosity=str(temporal.laminar_dynamic_viscosity)
     )
     writer = Writer('hdf_antares')
     writer['filename'] = bl_path + 'BL_line_prof_{}_{}'.format(chunk_start, chunk_end)

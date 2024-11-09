@@ -26,6 +26,13 @@ delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary
 
 file = '../mesh/tr-meas-surface_first_70511.hdf5'
 b = h5py.File(file,'r')
+
+dn0 = eval(settings.at["dn0", settings.columns[0]]) # height of first grid cell from wall
+dn_max = eval(settings.at["dn_max", settings.columns[0]]) # Max allowable size of boundary layer grid
+dn_q = eval(settings.at["dn_q", settings.columns[0]]) # growth rate of boundary layer grid
+target_height = eval(settings.at["target_height", settings.columns[0]]) # Target wall height of boundary layer grid
+Nn = eval(settings.at["Nn", settings.columns[0]]) # Min number of cells in boundary layer grid
+
 #Investigate content of file
 print('zones in base b',b.keys())
 print('instants in base b',b['Geometry'].keys())
@@ -209,12 +216,6 @@ plt.axis('equal')
 plt.savefig('../mesh/surface_vector_2.png')
 
 # In[11]:
-dn0 = eval(settings.at["dn0", settings.columns[0]]) # height of first grid cell from wall
-dn_max = eval(settings.at["dn_max", settings.columns[0]]) # Max allowable size of boundary layer grid
-dn_q = eval(settings.at["dn_q", settings.columns[0]]) # growth rate of boundary layer grid
-target_height = eval(settings.at["target_height", settings.columns[0]]) # Target wall height of boundary layer grid
-Nn = eval(settings.at["Nn", settings.columns[0]]) # Min number of cells in boundary layer grid
-
 N_0 = 0
 while target_height > N_0:
     Nn += 1
@@ -286,7 +287,6 @@ Nvol = np.repeat(Nxy[:,:,np.newaxis,:],Nz,axis=2)
 
 
 # In[16]:
-
 
 bv = Base()
 bv.init()
