@@ -86,8 +86,8 @@ coordinates_df.to_csv(bl_save_path + '{}_coordinates.csv'.format(case_name))
 print('Loading data...')
 data_dict = {}
 if os.path.isfile(bl_save_path + 'data_dict.pkl'):
-	data_dict = pickle.load(bl_save_path + 'data_dict.pkl')
-	print(bl_save_path + 'data_dict.pkl','already exists')
+	with open(bl_save_path + 'data_dict.pkl', 'rb') as f:
+		data_dict = pickle.load(f)
 else:
 	for var in var_list:
 		#For every timestep form a 2D matrix of velocities (wall normal , streamwise)
@@ -193,8 +193,9 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*data_dict['density_mean'][:,istreamwise]*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
 	total_pressure = total_pressure - total_pressure[0]
 	density = data_dict['density_mean'][:,istreamwise][0]
+	data_dict['Ut_mean'][:,istreamwise][0] = 0.0 # Enforce 1st element velocity to be zero
+	data_dict['mag_velocity_rel_mean'][:,istreamwise][0] = 0.0 # Enforce 1st element velocity to be zero
 	U_t = data_dict['Ut_mean'][:,istreamwise]
-	U_t[0] = 0.0 # Enforce 1st element velocity of zero
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
 	dudy = np.zeros(np.size(mag_velocity_rel)-1)
 	dudy = np.diff(U_t)/np.diff(hcoor)
