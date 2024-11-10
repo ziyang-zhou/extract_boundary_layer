@@ -184,7 +184,8 @@ print('Computing pressure gradient...')
 smoothed_static_pressure = savgol_filter(data_dict['static_pressure_mean'][0,:-1], window_length=5, polyorder=2)
 dpds = np.zeros(np.size(smoothed_static_pressure)-1)
 dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-1])
-data_dict['dpds'] = dpds
+dpds_interp = np.interp(scoor,scoor[:-2],dpds)
+data_dict['dpds'] = dpds_interp
 
 print('Computing parameter of the boundary layer...')
 
