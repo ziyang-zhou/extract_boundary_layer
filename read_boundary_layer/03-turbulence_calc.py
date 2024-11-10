@@ -2,6 +2,7 @@
 
 from antares import *
 from functions import analysis, extract_BL_params
+from scipy.signal import savgol_filter
 import vtk
 import matplotlib.pyplot as plt
 import numpy as np
@@ -180,8 +181,10 @@ data_dict['density_mean'] = data_dict['density'].mean(axis=0,dtype=np.float64)
 data_dict['mag_velocity_rel_mean'] = data_dict['mag_velocity_rel'].mean(axis=0,dtype=np.float64)
 
 print('Computing pressure gradient...')
-_, data_dict['dpds'] = fit_and_derivative(scoor[:-1], data_dict['static_pressure_mean'][0,:-1], degree=3) # last element in streamwise direction ommitted due to erroneous extraction.
-data_dict['dpds'] = np.interp(scoor,scoor[:-1],data_dict['dpds'])
+smoothed_static_pressure = savgol_filter(data_dict['static_pressure_mean'][0,:-1], window_length=5, polyorder=2)
+dpds = np.zeros(np.size(smoothed_static_pressure)-1)
+dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-1])
+data_dict['dpds'] = dpds
 
 print('Computing parameter of the boundary layer...')
 
