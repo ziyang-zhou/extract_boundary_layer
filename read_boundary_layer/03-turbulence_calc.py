@@ -108,7 +108,6 @@ for var in var_list:
 					data_dict = pickle.load(f)
 				outer_break = True  # Set flag to break outer loop
 				break
-			
 		if outer_break:
 			break  # Break the outer loop
 		for n,i in enumerate(BL_line_prof[0].keys()[1:]):
@@ -132,20 +131,19 @@ for var in var_list:
 		print('data shape is {}'.format(np.shape(data)))
 		print('chunk {} read'.format(j))
 
-	if if_interpolate == True:
-		for ki in range(0,np.shape(data)[2]-1):
-			for t in range(0,np.shape(data)[0]-1):
-				i_zero = np.where(abs(data[t,:,ki]) == 0)[0]
-				for i in i_zero:
-					if i+1 not in i_zero:
-						data[t,i,ki] = (data[t,i-1,ki] + data[t,i+1,ki])/2
-					else:
-						#Obtain the next non-zero value for interpolation
-						n=0
-						while (data[t,i+n,ki]==0):
-							n+=1
-						data[t,i,ki] = (data[t,i-1,ki] + data[t,i+n,ki])/2
-
+		if if_interpolate == True:
+			for ki in range(0,np.shape(data)[2]-1):
+				for t in range(0,np.shape(data)[0]-1):
+					i_zero = np.where(abs(data[t,:,ki]) == 0)[0]
+					for i in i_zero:
+						if i+1 not in i_zero:
+							data[t,i,ki] = (data[t,i-1,ki] + data[t,i+1,ki])/2
+						else:
+							#Obtain the next non-zero value for interpolation
+							n=0
+							while (data[t,i+n,ki]==0):
+								n+=1
+							data[t,i,ki] = (data[t,i-1,ki] + data[t,i+n,ki])/2
 	data_dict[var] = data
 
 with open(bl_save_path + 'data_dict.pkl', 'wb') as f:
