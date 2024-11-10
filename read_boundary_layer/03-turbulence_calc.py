@@ -182,6 +182,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	total_pressure = total_pressure - total_pressure[0]
 	density = data_dict['density_mean'][:,istreamwise][0]
 	U_t = data_dict['Ut_mean'][:,istreamwise]
+	U_t[0] = 0.0 # Enforce 1st element velocity of zero
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
 	dudy = np.zeros(np.size(mag_velocity_rel)-1)
 	dudy = np.diff(U_t)/np.diff(hcoor)
@@ -205,7 +206,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		'vv_mean' : data_dict['vv_mean'][:,istreamwise],
 		'uv_mean' : data_dict['uv_mean'][:,istreamwise]
 	})
-	bl_data.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,istreamwise).zfill(3))
+	bl_data.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)))
 
 # Save boundary layer info
 surface_data = pd.DataFrame({
@@ -220,4 +221,4 @@ surface_data = pd.DataFrame({
 	'Ue' : Ue,
 	'uv_max' : uv_max
 })
-surface_data.to_csv(bl_save_path + 'surface_parameter.csv')
+surface_data.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
