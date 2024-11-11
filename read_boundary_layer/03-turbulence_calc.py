@@ -48,7 +48,7 @@ def fit_and_derivative(x, y, degree=3):
 
 settings = pd.read_csv("../setting.csv", index_col= 0)
 delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary layer thickness
-
+density = 1.251
 case_name = 'L08'
 
 mesh_read_path = temporal.mesh_path
@@ -56,7 +56,7 @@ bl_read_path = temporal.bl_path
 bl_save_path = temporal.project_path + 'boundary_layer_profile/'
 
 nb_points = temporal.nb_points #number of points across the boundary layer
-var_list = ['U_n','U_t','static_pressure','density','mag_velocity_rel'] #variable used for the cross correlation contour
+var_list = ['U_n','U_t','static_pressure','mag_velocity_rel'] #variable used for the cross correlation contour
 timestep_size = temporal.timestep_size
 if_interpolate = True
 kinematic_viscosity = eval(temporal.kinematic_viscosity)
@@ -179,7 +179,6 @@ for istreamwise in range(0,np.shape(data_dict['uv_mean'])[1]):                  
 # Compute delta_95, momentum thickness and displacement thickness
 delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall = tuple(np.zeros(len(scoor)) for _ in range(9))
 data_dict['static_pressure_mean'] = data_dict['static_pressure'].mean(axis=0,dtype=np.float64)
-data_dict['density_mean'] = data_dict['density'].mean(axis=0,dtype=np.float64)
 data_dict['mag_velocity_rel_mean'] = data_dict['mag_velocity_rel'].mean(axis=0,dtype=np.float64)
 
 print('Computing pressure gradient...')
@@ -192,9 +191,8 @@ data_dict['dpds'] = dpds_interp
 print('Computing parameter of the boundary layer...')
 
 for istreamwise,streamwise_coor in enumerate(scoor):
-	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*data_dict['density_mean'][:,istreamwise]*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
+	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
 	total_pressure = total_pressure - total_pressure[0]
-	density = data_dict['density_mean'][:,istreamwise][0]
 	data_dict['Ut_mean'][:,istreamwise][0] = 0.0 # Enforce 1st element velocity to be zero
 	data_dict['mag_velocity_rel_mean'][:,istreamwise][0] = 0.0 # Enforce 1st element velocity to be zero
 	U_t = data_dict['Ut_mean'][:,istreamwise]
