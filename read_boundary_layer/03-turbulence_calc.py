@@ -85,6 +85,7 @@ coordinates_df.to_csv(bl_save_path + '{}_coordinates.csv'.format(case_name))
 
 print('Loading data...')
 data_dict = {}
+outer_break = False
 for var in var_list:
 	#For every timestep form a 2D matrix of velocities (wall normal , streamwise)
 	#Array dim : 1 is time, 2 is wall normal and 3 is chordwise
@@ -144,7 +145,7 @@ for var in var_list:
 							while (data[t,i+n,ki]==0):
 								n+=1
 							data[t,i,ki] = (data[t,i-1,ki] + data[t,i+n,ki])/2
-	data_dict[var] = data
+		data_dict[var] = data
 
 with open(bl_save_path + 'data_dict.pkl', 'wb') as f:
 	pickle.dump(data_dict, f)
@@ -175,7 +176,7 @@ for istreamwise in range(0,np.shape(data_dict['uv_mean'])[1]):                  
 		data_dict['uu_mean'][iwallnormal,istreamwise],data_dict['vv_mean'][iwallnormal,istreamwise],data_dict['uv_mean'][iwallnormal,istreamwise] = analysis.get_velocity_cov(U_t,U_n)
 
 # Compute delta_95, momentum thickness and displacement thickness
-delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue = tuple(np.zeros(len(scoor)) for _ in range(8))
+delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall = tuple(np.zeros(len(scoor)) for _ in range(9))
 data_dict['static_pressure_mean'] = data_dict['static_pressure'].mean(axis=0,dtype=np.float64)
 data_dict['density_mean'] = data_dict['density'].mean(axis=0,dtype=np.float64)
 data_dict['mag_velocity_rel_mean'] = data_dict['mag_velocity_rel'].mean(axis=0,dtype=np.float64)
@@ -206,10 +207,10 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	Ue[istreamwise] = U_t[idx_delta_95]
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
-	tau_wall = extract_BL_params.get_wall_shear_stress_from_line(hcoor,mag_velocity_rel,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3, npts_interp=100,maximum_stress=False)
-	beta_c[istreamwise] = delta_theta[istreamwise]/tau_wall*data_dict['dpds'][istreamwise]
-	u_tau = np.sqrt(tau_wall/density)
-	cf[istreamwise] = tau_wall/q
+	tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,mag_velocity_rel,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3, npts_interp=100,maximum_stress=False)
+	beta_c[istreamwise] = delta_theta[istreamwise]/tau_wall[istreamwise]*data_dict['dpds'][istreamwise]
+	u_tau = np.sqrt(tau_wall[istreamwise]/density)
+	cf[istreamwise] = tau_wall[istreamwise]/q
 	RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf[istreamwise]/2)
 	bl_data = pd.DataFrame({
 		'h' : hcoor,
@@ -231,6 +232,7 @@ surface_data = pd.DataFrame({
     'RT': RT,
 	'dpds' : data_dict['dpds'],
 	'cf' : cf,
+	'tau_wall' : tau_wall,
 	'Ue' : Ue,
 	'uv_max' : uv_max
 })
