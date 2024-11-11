@@ -26,6 +26,7 @@ delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary
 
 file = '../mesh/tr-meas-surface_first_70511.hdf5'
 b = h5py.File(file,'r')
+os.makedirs('path/to/directory', exist_ok=True)
 
 dn0 = eval(settings.at["dn0", settings.columns[0]]) # height of first grid cell from wall
 dn_max = eval(settings.at["dn_max", settings.columns[0]]) # Max allowable size of boundary layer grid
