@@ -259,9 +259,10 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                 loc_array.append(y_i)
 
             # Curve fit the correlation with distance
-            params, _ = curve_fit(model, abs(loc_array - y0_i), Rxt_spectrum_aux, p0=[1])
-            L_fit = params[0]
-            Rxt_spectrum_aux = model(abs(loc_array - y0_i), L_fit)
+            if i is not 0:
+                params, _ = curve_fit(model, abs(loc_array - y0_i), Rxt_spectrum_aux, p0=[1])
+                L_fit = params[0]
+                Rxt_spectrum_aux = model(abs(loc_array - y0_i), L_fit)
 
             if len(loc_array) > 0 : 
                 if direction == 'plus':
@@ -295,6 +296,12 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                 c = get_velocity_corr(p0, p1)
                 Rxt_spectrum_aux.append(c)
                 loc_array.append(x_i)
+
+            # Curve fit the correlation with distance
+            if i is not 0:
+                params, _ = curve_fit(model, abs(loc_array - y0_i), Rxt_spectrum_aux, p0=[1])
+                L_fit = params[0]
+                Rxt_spectrum_aux = model(abs(loc_array - y0_i), L_fit)
 
             if direction == 'plus':
                 L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])

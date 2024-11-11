@@ -71,7 +71,7 @@ xcoor0 = temporal.xcoor0 # x location of the integration axis
 # Create required directory
 probe_save_path = result_save_path + 'probe_{}/'.format(probe_number)
 if not os.path.exists(probe_save_path):
-    os.makedirs(result_save_path)
+    os.makedirs(probe_save_path, exist_ok=True)
 
 #Read the mesh
 r=Reader('hdf_antares')
