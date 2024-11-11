@@ -147,8 +147,9 @@ for var in var_list:
 							data[t,i,ki] = (data[t,i-1,ki] + data[t,i+n,ki])/2
 		data_dict[var] = data
 
-with open(bl_save_path + 'data_dict.pkl', 'wb') as f:
-	pickle.dump(data_dict, f)
+if outer_break == False:
+	with open(bl_save_path + 'data_dict.pkl', 'wb') as f:
+		pickle.dump(data_dict, f)
 # ------------------------------
 # Parameter calculation
 # ------------------------------
@@ -207,7 +208,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	Ue[istreamwise] = U_t[idx_delta_95]
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
-	tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,mag_velocity_rel,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3, npts_interp=100,maximum_stress=False)
+	tau_wall[istreamwise] = abs((U_t[1] - U_t[0])/(hcoor[1]-hcoor[0])*kinematic_viscosity)
 	beta_c[istreamwise] = delta_theta[istreamwise]/tau_wall[istreamwise]*data_dict['dpds'][istreamwise]
 	u_tau = np.sqrt(tau_wall[istreamwise]/density)
 	cf[istreamwise] = tau_wall[istreamwise]/q
