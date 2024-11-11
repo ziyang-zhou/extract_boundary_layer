@@ -4,6 +4,7 @@ from functions import analysis
 from functions import extract_BL_params
 from scipy.signal import butter, lfilter, savgol_filter
 from scipy import interpolate, integrate
+from scipy.optimize import curve_fit
 import vtk
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,6 +29,10 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
     y = lfilter(b, a, data)
     return y
+
+# Define the exponential function
+def model(x, L):
+    return np.exp(-x / L)
 # ------------------
 # Reading the files
 # ------------------

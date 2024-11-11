@@ -247,7 +247,7 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                 mask_integrate_range = (y < y0_i) & ((y > y0_i - delta_95))
             Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
             loc_array = []
-
+            
             # Recompute the cross-correlation array
             for j, y_i in enumerate(y[mask_integrate_range]):  # Moving point
                 p1 = pfluc[:, mask_integrate_range, :][:, j, ki0]
@@ -257,6 +257,12 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                 c = get_velocity_corr(p0, p1)
                 Rxt_spectrum_aux.append(c)
                 loc_array.append(y_i)
+
+            # Curve fit the correlation with distance
+            params, _ = curve_fit(model, abs(loc_array - y0_i), Rxt_spectrum_aux, p0=[1])
+            L_fit = params[0]
+            Rxt_spectrum_aux = model(abs(loc_array - y0_i), L_fit)
+
             if len(loc_array) > 0 : 
                 if direction == 'plus':
                     L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
@@ -327,8 +333,8 @@ def mov_avg(X,k):
     return X_new
 
 # Define the exponential function
-def exp_func(x, A, L):
-    return A*np.exp(x*L)
+def model(x, L):
+    return np.exp(-x / L)
 
 def butter_bandpass(lowcut, highcut, fs, order=5):
     nyq = 0.5 * fs
