@@ -204,7 +204,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	dudy_interp = np.interp(hcoor,hcoor[:-1]+np.diff(hcoor)/2,dudy)
 
 	idx_delta_95,delta_95[istreamwise] = extract_BL_params.get_delta95(hcoor,total_pressure)
-	uv_max[istreamwise] = np.max(data_dict['uv_mean'][:,istreamwise])
+	uv_max[istreamwise] = np.max(abs(data_dict['uv_mean'][:,istreamwise]))
 	Ue[istreamwise] = U_t[idx_delta_95]
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
