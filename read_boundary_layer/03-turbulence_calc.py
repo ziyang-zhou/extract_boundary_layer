@@ -85,8 +85,21 @@ coordinates_df.to_csv(bl_save_path + '{}_coordinates.csv'.format(case_name))
 
 print('Loading data...')
 data_dict = {}
-outer_break = False
-for var in var_list:
+
+#creation of streamwise distance array
+xcoor = BL_line_geom[0][0]['x'][:,0,0]
+ycoor = BL_line_geom[0][0]['y'][:,0,0] 
+ds = np.sqrt((xcoor[1:]-xcoor[:-1])**2 + (ycoor[1:]-ycoor[:-1])**2)
+sprof = np.zeros(ds.size+1,)
+sprof[1:] = np.cumsum(ds)
+scoor = sprof
+hcoor = np.linspace(0,temporal.length_extraction,nb_points)
+
+if os.path.isfile(bl_save_path + 'data_dict.pkl'):
+	with open(bl_save_path + 'data_dict.pkl', 'rb') as f:
+		data_dict = pickle.load(f)
+else:
+	#Load the boundary layer data
 	#For every timestep form a 2D matrix of velocities (wall normal , streamwise)
 	#Array dim : 1 is time, 2 is wall normal and 3 is chordwise
 	for j in range(num_chunks):
@@ -94,21 +107,7 @@ for var in var_list:
 		r = Reader('hdf_antares')
 		r['filename'] = bl_read_path + 'BL_line_prof_{}_{}.h5'.format(starting_timestep+j*step_per_chunk,starting_timestep+(j+1)*(step_per_chunk))
 		BL_line_prof = r.read()
-	
-		if j == 0:
-			#creation of streamwise distance array
-			xcoor = BL_line_geom[0][0]['x'][:,0,0]
-			ycoor = BL_line_geom[0][0]['y'][:,0,0] 
-			ds = np.sqrt((xcoor[1:]-xcoor[:-1])**2 + (ycoor[1:]-ycoor[:-1])**2)
-			sprof = np.zeros(ds.size+1,)
-			sprof[1:] = np.cumsum(ds)
-			scoor = sprof
-			hcoor = BL_line_prof[0][0]['h'][0,:] # Read the wall normal distance
-			if os.path.isfile(bl_save_path + 'data_dict.pkl'):
-				with open(bl_save_path + 'data_dict.pkl', 'rb') as f:
-					data_dict = pickle.load(f)
-				outer_break = True  # Set flag to break outer loop
-				break
+
 		if outer_break:
 			break  # Break the outer loop
 		for n,i in enumerate(BL_line_prof[0].keys()[1:]):
@@ -131,7 +130,6 @@ for var in var_list:
 
 		print('data shape is {}'.format(np.shape(data)))
 		print('chunk {} read'.format(j))
-
 		if if_interpolate == True:
 			for ki in range(0,np.shape(data)[2]-1):
 				for t in range(0,np.shape(data)[0]-1):
@@ -145,9 +143,9 @@ for var in var_list:
 							while (data[t,i+n,ki]==0):
 								n+=1
 							data[t,i,ki] = (data[t,i-1,ki] + data[t,i+n,ki])/2
+	# Save the boundary layer data
+	for var in var_list:
 		data_dict[var] = data
-
-if outer_break == False:
 	with open(bl_save_path + 'data_dict.pkl', 'wb') as f:
 		pickle.dump(data_dict, f)
 # ------------------------------
