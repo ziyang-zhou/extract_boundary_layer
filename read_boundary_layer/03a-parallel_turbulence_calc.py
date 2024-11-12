@@ -45,41 +45,43 @@ def fit_and_derivative(x, y, degree=3):
 
 # Function to process each chunk for a variable (this will be parallelized)
 def process_chunk(j, var, starting_timestep, step_per_chunk, BL_line_geom, bl_read_path, xcoor, ycoor, if_interpolate):
-    # Read the boundary layer history at x_loc for chunk j
-    r = Reader('hdf_antares')
-    r['filename'] = bl_read_path + f'BL_line_prof_{starting_timestep + j*step_per_chunk}_{starting_timestep + (j + 1) * step_per_chunk}.h5'
-    BL_line_prof = r.read()
+	# Read the boundary layer history at x_loc for chunk j
+	r = Reader('hdf_antares')
+	r['filename'] = bl_read_path + f'BL_line_prof_{starting_timestep + j*step_per_chunk}_{starting_timestep + (j + 1) * step_per_chunk}.h5'
+	BL_line_prof = r.read()
 
-    # Process the streamwise distance array only once (for the first chunk)
-    if j == 0:
-        ds = np.sqrt((xcoor[1:] - xcoor[:-1])**2 + (ycoor[1:] - ycoor[:-1])**2)
-        sprof = np.zeros(ds.size + 1)
-        sprof[1:] = np.cumsum(ds)
-        scoor = sprof
-        hcoor = BL_line_prof[0][0]['h'][0, :]  # Read the wall normal distance
+	# Process the streamwise distance array only once (for the first chunk)
+	if j == 0:
+		ds = np.sqrt((xcoor[1:] - xcoor[:-1])**2 + (ycoor[1:] - ycoor[:-1])**2)
+		sprof = np.zeros(ds.size + 1)
+		sprof[1:] = np.cumsum(ds)
+		scoor = sprof
+		hcoor = BL_line_prof[0][0]['h'][0, :]  # Read the wall normal distance
 
-    chunk_data = []
+	chunk_data = []
 
-    for n, i in enumerate(BL_line_prof[0].keys()[1:]):
-        profile = None
-        for m in range(len(xcoor)):  # Read all spatial locations in the current timestep
-            profile_append = np.array(BL_line_prof[0][i][var][m])
-            if m == 0:
-                profile = profile_append
-            else:
-                profile = np.concatenate((profile, profile_append[:, np.newaxis]), axis=1)
+	for n, i in enumerate(BL_line_prof[0].keys()[1:]):
+		profile = None
+		for m in range(len(xcoor)):  # Read all spatial locations in the current timestep
+			profile_append = np.array(BL_line_prof[0][i][var][m])
+		if (m==0):
+			profile = profile_append #Create the data to be appended by concatenating the wall normal profiles for each x location
+		elif (m==1):
+			profile = np.concatenate((profile[:,np.newaxis], profile_append[:,np.newaxis]), axis=1)
+		else :
+			profile = np.concatenate((profile, profile_append[:,np.newaxis]), axis=1)
 
         # Append the profile data to chunk_data
-        chunk_data.append(profile)
+		chunk_data.append(profile)
 
-    # Stack the profiles for each timestep into a single array
-    data_append = np.stack(chunk_data, axis=0)
+	# Stack the profiles for each timestep into a single array
+	data_append = np.stack(chunk_data, axis=0)
 
-    # Interpolation if required
-    if if_interpolate:
-        data_append = interpolate_data(data_append)
+	# Interpolation if required
+	if if_interpolate:
+		data_append = interpolate_data(data_append)
 
-    return data_append
+	return data_append
 
 # Interpolation function
 def interpolate_data(data):
