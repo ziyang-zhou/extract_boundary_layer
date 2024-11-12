@@ -180,7 +180,6 @@ smoothed_static_pressure = savgol_filter(data_dict['static_pressure_mean'][0,:-1
 dpds = np.zeros(np.size(smoothed_static_pressure)-1)
 dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-1])
 dpds_interp = np.interp(scoor,scoor[:-2],dpds)
-dpds_interp = savgol_filter(dpds_interp, 11, 2)
 data_dict['dpds'] = dpds_interp
 
 print('Computing parameter of the boundary layer...')
@@ -233,4 +232,10 @@ surface_data = pd.DataFrame({
 	'Ue' : Ue,
 	'uv_max' : uv_max
 })
+
+# Smooth profile in streamwise direction
+smooth_var_list = ['beta_c','dpds','cf','tau_wall','Ue','uv_max']
+for smooth_var in smooth_var_list:
+	surface_data[smooth_var] = savgol_filter(surface_data[smooth_var], 5, 2)
+
 surface_data.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
