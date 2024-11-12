@@ -180,6 +180,7 @@ smoothed_static_pressure = savgol_filter(data_dict['static_pressure_mean'][0,:-1
 dpds = np.zeros(np.size(smoothed_static_pressure)-1)
 dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-1])
 dpds_interp = np.interp(scoor,scoor[:-2],dpds)
+dpds_interp = savgol_filter(dpds_interp, 11, 2)
 data_dict['dpds'] = dpds_interp
 
 print('Computing parameter of the boundary layer...')
@@ -200,12 +201,14 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	Ue[istreamwise] = U_t[idx_delta_95]
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
-	#tau_wall[istreamwise] = abs((U_t[1] - U_t[0])/(hcoor[1]-hcoor[0])*kinematic_viscosity)
-	tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=100,maximum_stress=False)
+	tau_wall[istreamwise] = abs((U_t[1] - U_t[0])/(hcoor[1]-hcoor[0])*kinematic_viscosity)
+	#tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=100,maximum_stress=False)
+
 	beta_c[istreamwise] = delta_theta[istreamwise]/tau_wall[istreamwise]*data_dict['dpds'][istreamwise]
 	u_tau = np.sqrt(tau_wall[istreamwise]/density)
 	cf[istreamwise] = tau_wall[istreamwise]/q
 	RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf[istreamwise]/2)
+	#RT[istreamwise] = (delta_95[istreamwise]/Ue[istreamwise])/(kinematic_viscosity/u_tau**2)
 	bl_data = pd.DataFrame({
 		'h' : hcoor,
 		'U_t' : U_t,
