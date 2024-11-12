@@ -185,12 +185,12 @@ data_dict['dpds'] = dpds_interp
 print('Computing parameter of the boundary layer...')
 
 for istreamwise,streamwise_coor in enumerate(scoor):
-	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
-	total_pressure = total_pressure - total_pressure[0]
 	data_dict['Ut_mean'][:,istreamwise][0] = 0.0 # Enforce 1st element velocity to be zero
 	data_dict['mag_velocity_rel_mean'][:,istreamwise][0] = 0.0 # Enforce 1st element velocity to be zero
 	U_t = data_dict['Ut_mean'][:,istreamwise]
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
+	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
+	total_pressure = total_pressure - total_pressure[0]
 	dudy = np.zeros(np.size(mag_velocity_rel)-1)
 	dudy = np.diff(U_t)/np.diff(hcoor)
 	dudy_interp = np.interp(hcoor,hcoor[:-1]+np.diff(hcoor)/2,dudy)
@@ -200,7 +200,8 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	Ue[istreamwise] = U_t[idx_delta_95]
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
-	tau_wall[istreamwise] = abs((U_t[1] - U_t[0])/(hcoor[1]-hcoor[0])*kinematic_viscosity)
+	#tau_wall[istreamwise] = abs((U_t[1] - U_t[0])/(hcoor[1]-hcoor[0])*kinematic_viscosity)
+	tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=100,maximum_stress=False)
 	beta_c[istreamwise] = delta_theta[istreamwise]/tau_wall[istreamwise]*data_dict['dpds'][istreamwise]
 	u_tau = np.sqrt(tau_wall[istreamwise]/density)
 	cf[istreamwise] = tau_wall[istreamwise]/q
