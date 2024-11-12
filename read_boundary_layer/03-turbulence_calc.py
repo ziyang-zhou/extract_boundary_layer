@@ -107,8 +107,8 @@ else:
 		r = Reader('hdf_antares')
 		r['filename'] = bl_read_path + 'BL_line_prof_{}_{}.h5'.format(starting_timestep+j*step_per_chunk,starting_timestep+(j+1)*(step_per_chunk))
 		BL_line_prof = r.read()
-		for n,i in enumerate(BL_line_prof[0].keys()[1:]):
-			for var in var_list:
+		for var in var_list:
+			for n,i in enumerate(BL_line_prof[0].keys()[1:]):
 				for m in range(len(xcoor)):  # read all spatial locations in the current timestep
 					profile_append = np.array(BL_line_prof[0][i][var][m])
 					if (m==0):
@@ -119,27 +119,28 @@ else:
 						profile = np.concatenate((profile, profile_append[:,np.newaxis]), axis=1)
 				data_append = profile
 				if (n == 0) and (j == 0):
-					data = data_append
+					data_dict[var] = data_append
 				elif (n == 1) and (j == 0):
-					data = np.concatenate((data[np.newaxis,:,:], data_append[np.newaxis,:,:]), axis=0)
+					data_dict[var] = np.concatenate((data_dict[var][np.newaxis,:,:], data_append[np.newaxis,:,:]), axis=0)
 				else:
-					data = np.concatenate((data, data_append[np.newaxis,:,:]), axis=0)
-				print('data shape is {}'.format(np.shape(data)))
+					data_dict[var] = np.concatenate((data_dict[var], data_append[np.newaxis,:,:]), axis=0)
+				print('data shape is {}'.format(np.shape(data_dict[var])))
 				print('chunk {} read'.format(j))
-				if if_interpolate == True:
-					for ki in range(0,np.shape(data)[2]-1):
-						for t in range(0,np.shape(data)[0]-1):
-							i_zero = np.where(abs(data[t,:,ki]) == 0)[0]
-							for i in i_zero:
-								if i+1 not in i_zero:
-									data[t,i,ki] = (data[t,i-1,ki] + data[t,i+1,ki])/2
-								else:
-									#Obtain the next non-zero value for interpolation
-									n=0
-									while (data[t,i+n,ki]==0):
-										n+=1
-									data[t,i,ki] = (data[t,i-1,ki] + data[t,i+n,ki])/2
-				data_dict[var] = data
+
+	for var in var_list:
+		if if_interpolate == True:
+			for ki in range(0,np.shape(data_dict[var])[2]-1):
+				for t in range(0,np.shape(data_dict[var])[0]-1):
+					i_zero = np.where(abs(data_dict[var][t,:,ki]) == 0)[0]
+					for i in i_zero:
+						if i+1 not in i_zero:
+							data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+1,ki])/2
+						else:
+							#Obtain the next non-zero value for interpolation
+							n=0
+							while (data_dict[var][t,i+n,ki]==0):
+								n+=1
+							data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+n,ki])/2
 	# Save the boundary layer data
 	with open(bl_save_path + 'data_dict.pkl', 'wb') as f:
 		pickle.dump(data_dict, f)
