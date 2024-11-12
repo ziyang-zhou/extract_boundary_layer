@@ -49,6 +49,7 @@ def fit_and_derivative(x, y, degree=3):
 settings = pd.read_csv("../setting.csv", index_col= 0)
 delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary layer thickness
 density = 1.251
+Uinf = 16.6
 case_name = 'L08'
 
 mesh_read_path = temporal.mesh_path
@@ -176,7 +177,8 @@ data_dict['static_pressure_mean'] = data_dict['static_pressure'].mean(axis=0,dty
 data_dict['mag_velocity_rel_mean'] = data_dict['mag_velocity_rel'].mean(axis=0,dtype=np.float64)
 
 print('Computing pressure gradient...')
-smoothed_static_pressure = savgol_filter(data_dict['static_pressure_mean'][0,:-1], window_length=5, polyorder=2)
+smoothed_static_pressure = savgol_filter(data_dict['static_pressure_mean'][0,:-1], window_length=11, polyorder=2)
+smoothed_cp = (smoothed_static_pressure - 101325)/(0.5*density*Uinf**2)
 dpds = np.zeros(np.size(smoothed_static_pressure)-1)
 dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-1])
 dpds_interp = np.interp(scoor,scoor[:-2],dpds)
@@ -236,6 +238,6 @@ surface_data = pd.DataFrame({
 # Smooth profile in streamwise direction
 smooth_var_list = ['beta_c','dpds','cf','tau_wall','Ue','uv_max']
 for smooth_var in smooth_var_list:
-	surface_data[smooth_var] = savgol_filter(surface_data[smooth_var], 5, 2)
+	surface_data[smooth_var][:-1] = savgol_filter(surface_data[smooth_var][:-1], 11, 2)
 
 surface_data.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
