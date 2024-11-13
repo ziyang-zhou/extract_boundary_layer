@@ -3,6 +3,7 @@ import numpy as np
 import pdb
 import math
 import pandas as pd
+import os
 
 def rotate_points(x, y, x_0, y_0, angle_degrees):
     # Convert angle to radians
@@ -77,6 +78,7 @@ def area_weighting(value, area):
     return weighted_values
     
 file = 'tr-meas-surface.hdf5'
+os.makedirs('probe_pressure/', exist_ok=True)
 fd = h5py.File(file,'r')
 keylist = fd.keys()
 x = fd['Geometry']['X']
@@ -177,5 +179,6 @@ for probe in probe_list:
 	# Convert the data to a DataFrame Create new array for pressure matrix at selected point and write it into a file
 	df = pd.DataFrame(pressure_history, columns=['time', 'pressure'])	
 	# Define the filename
+	
 	filename = 'probe_pressure/probe_{}_pressure.csv'.format(probe)
 	np.savetxt(filename, pressure_history, fmt='%.18e', delimiter=',', newline='\n', header='time,pressure')

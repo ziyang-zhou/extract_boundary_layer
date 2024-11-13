@@ -8,6 +8,7 @@ import pdb
 
 vtu_path = temporal.vtu_path #path to read the vtu data from
 vol_path = temporal.vol_path #path to write the h5 data to
+os.makedirs(vol_path, exist_ok=True)
 step_per_chunk=temporal.step_per_chunk
 total_timesteps=temporal.total_timesteps
 starting_timestep = temporal.starting_timestep

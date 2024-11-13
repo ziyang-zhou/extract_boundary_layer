@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import scipy.interpolate as sintp
 import scipy.ndimage as sim
 import h5py
+import os
 
 #############################################################################################
 #                                        Load Inputs                                        #
