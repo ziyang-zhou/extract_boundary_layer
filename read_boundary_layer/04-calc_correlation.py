@@ -252,8 +252,8 @@ Rxt_spectrum = []
 
 #Calculate integral length scale 22+
 if if_integrate_axis == True:
-	integration_axis_list = ['column','row','column','row']
-	direction_list = ['plus','plus','minus','minus']
+	integration_axis_list = ['column']
+	direction_list = ['plus']
 	for i,integration_axis in enumerate(integration_axis_list):
 		L_22, scale = analysis.exp_fit_length_scale(pfluc,scoor,hcoor,scoor[ki0],h_start,scoor[ki0],h_end,fs,delta_95,axis=integration_axis,direction = direction_list[i])
 		L_22_df = pd.DataFrame({'wall distance': scale, 'L22+':L_22})

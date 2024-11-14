@@ -234,81 +234,73 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
     scale : np.ndarray
         Spatial axis along which length scale is computed.
     '''
-    
+
+    ki0 = find_nearest(x, x0)  # Find the x coordinate index of the origin
+    mask_plot_range = (y > y0) & (y < y1)
+    L_scale = np.zeros(len(y[mask_plot_range]))
+
     if axis == 'column':
-        ki0 = find_nearest(x, x0)  # Find the x coordinate index of the origin
-        mask_plot_range = (y > y0) & (y < y1)
-        L_scale = np.zeros(len(y[mask_plot_range]))
-
         for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
-            if direction == 'plus':
-                mask_integrate_range = (y > y0_i) & ((y < y0_i + delta_95)) # Define the integration range for each point to be plotted
-            elif direction == 'minus':
-                mask_integrate_range = (y < y0_i) & ((y > y0_i - delta_95))
-            Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
-            loc_array = []
-            
-            # Recompute the cross-correlation array
-            for j, y_i in enumerate(y[mask_integrate_range]):  # Moving point
-                p1 = pfluc[:, mask_integrate_range, :][:, j, ki0]
-                p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
-                #p1 = butter_bandpass_filter(p1, 1600, 8000, fs, order=5)
-                #p0 = butter_bandpass_filter(p0, 1600, 8000, fs, order=5)
-                c = get_velocity_corr(p0, p1)
-                Rxt_spectrum_aux.append(c)
-                loc_array.append(y_i)
+            if i % 10 == 0:
+                if direction == 'plus':
+                    mask_integrate_range = (y > y0_i) & ((y < y0_i + delta_95)) # Define the integration range for each point to be plotted
+                elif direction == 'minus':
+                    mask_integrate_range = (y < y0_i) & ((y > y0_i - delta_95))
+                Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
+                loc_array = []
+                # Recompute the cross-correlation array
+                for j, y_i in enumerate(y[mask_integrate_range]):  # Moving point
+                    p1 = pfluc[:, mask_integrate_range, :][:, j, ki0]
+                    p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
+                    #p1 = butter_bandpass_filter(p1, 1600, 8000, fs, order=5)
+                    #p0 = butter_bandpass_filter(p0, 1600, 8000, fs, order=5)
+                    c = get_velocity_corr(p0, p1)
+                    Rxt_spectrum_aux.append(c)
+                    loc_array.append(y_i)
+                # Curve fit the correlation with distance
+                if i is not 0:
+                    params, _ = curve_fit(model, abs(loc_array - y0_i), Rxt_spectrum_aux, p0=[1])
+                    L_fit = params[0]
+                    Rxt_spectrum_aux = model(abs(loc_array - y0_i), L_fit)
+                if len(loc_array) > 0 : 
+                    if direction == 'plus':
+                        L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
+                    elif direction == 'minus':
+                        L_scale[i] = -calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
+                else:
+                    L_scale[i] = 0
+        scale = loc_array
+        return L_scale, scale
 
-            # Curve fit the correlation with distance
-            if i is not 0:
-                params, _ = curve_fit(model, abs(loc_array - y0_i), Rxt_spectrum_aux, p0=[1])
-                L_fit = params[0]
-                Rxt_spectrum_aux = model(abs(loc_array - y0_i), L_fit)
-
-            if len(loc_array) > 0 : 
+    elif axis == 'row':
+        for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
+            if i % 10 == 0:
+                if direction == 'plus':
+                    mask_integrate_range = (x > x0) & (x < x0 + delta_95)  # Define the integration range for each point to be plotted
+                elif direction == 'minus':
+                    mask_integrate_range = (x < x0) & (x > x0 - delta_95)
+                Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
+                loc_array = []
+                # Recompute the cross-correlation array
+                for j, x_i in enumerate(x[mask_integrate_range]):  # Moving point
+                    p1 = pfluc[:, mask_plot_range, :][:, :, mask_integrate_range][:, i, j]
+                    p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
+                    #p1 = butter_bandpass_filter(p1, 1600, 8000, fs, order=5)
+                    #p0 = butter_bandpass_filter(p0, 1600, 8000, fs, order=5)
+                    c = get_velocity_corr(p0, p1)
+                    Rxt_spectrum_aux.append(c)
+                    loc_array.append(x_i)
+                # Curve fit the correlation with distance
+                if i is not 0:
+                    params, _ = curve_fit(model, abs(loc_array - y0_i), Rxt_spectrum_aux, p0=[1])
+                    L_fit = params[0]
+                    Rxt_spectrum_aux = model(abs(loc_array - y0_i), L_fit)
                 if direction == 'plus':
                     L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
                 elif direction == 'minus':
                     L_scale[i] = -calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
-            else:
-                L_scale[i] = 0
-        scale = y[mask_plot_range]
-        return L_scale, scale
 
-    elif axis == 'row':
-        ki0 = find_nearest(x, x0)  # Find the x coordinate index of the origin
-        mask_plot_range = (y > y0) & (y < y1)
-        L_scale = np.zeros(len(y[mask_plot_range]))
-
-        for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
-            if direction == 'plus':
-                mask_integrate_range = (x > x0) & (x < x0 + delta_95)  # Define the integration range for each point to be plotted
-            elif direction == 'minus':
-                mask_integrate_range = (x < x0) & (x > x0 - delta_95)
-            Rxt_spectrum_aux = []  # Array for storing cross-correlation on integration axis
-            loc_array = []
-
-            # Recompute the cross-correlation array
-            for j, x_i in enumerate(x[mask_integrate_range]):  # Moving point
-                p1 = pfluc[:, mask_plot_range, :][:, :, mask_integrate_range][:, i, j]
-                p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
-                #p1 = butter_bandpass_filter(p1, 1600, 8000, fs, order=5)
-                #p0 = butter_bandpass_filter(p0, 1600, 8000, fs, order=5)
-                c = get_velocity_corr(p0, p1)
-                Rxt_spectrum_aux.append(c)
-                loc_array.append(x_i)
-
-            # Curve fit the correlation with distance
-            if i is not 0:
-                params, _ = curve_fit(model, abs(loc_array - y0_i), Rxt_spectrum_aux, p0=[1])
-                L_fit = params[0]
-                Rxt_spectrum_aux = model(abs(loc_array - y0_i), L_fit)
-
-            if direction == 'plus':
-                L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
-            elif direction == 'minus':
-                L_scale[i] = -calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
-
-        scale = y[mask_plot_range]
+        scale = loc_array
         return L_scale, scale
 
     else:
