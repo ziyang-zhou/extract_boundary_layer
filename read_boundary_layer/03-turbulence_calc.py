@@ -215,7 +215,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 print('Computing pressure gradient...')
 smoothed_static_pressure = savgol_filter(edge_pressure[:-1], window_length=11, polyorder=2)
 dpds = np.zeros(np.size(smoothed_static_pressure)-1)
-dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-2])
+dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-1])
 dpds_interp = np.interp(scoor,scoor[:-2],dpds)
 data_dict['dpds'] = dpds_interp
 beta_c = delta_theta/tau_wall*data_dict['dpds']
