@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import scipy.interpolate as sintp
 import scipy.ndimage as sim
 import h5py
+import math
 import os
 
 #############################################################################################
@@ -41,6 +42,11 @@ print('instants in base b',b['Geometry'].keys())
 # In[4]:
 xvals=[-0.0307167,-0.0293987,-0.000383135,-0.00220858,-0.0307167]
 yvals=[0.0120501,0.0166085,0.00613008,0.00174928,0.0120501]
+
+#Define the center of rotation
+rotation_center_x = -0.067
+rotation_center_y = 0.0209
+angle_degrees = 7.0 # angle of rotation of airfoil with respect to 8 deg config
 # In[5]:
 x_coord_list = list(b['Geometry']['X'])
 x_coord_list = x_coord_list[::10000]
@@ -55,6 +61,27 @@ x_coord = x_coord[mask]
 y_coord = y_coord[mask]
 print('x_coord min',min(x_coord))
 print('y_coord max',max(y_coord))
+
+#Define function to rotate the original camber line setup for 8 deg case
+def rotate_points(x, y, x_0, y_0, angle_degrees):
+    # Convert angle to radians
+    angle_radians = math.radians(angle_degrees)
+    
+    # Translate points so that the rotation center is at the origin
+    x_translated = x - x_0
+    y_translated = y - y_0
+    
+    # Perform rotation using rotation matrix
+    x_rotated = x_translated * np.cos(angle_radians) + y_translated * np.sin(angle_radians)
+    y_rotated = -x_translated * np.sin(angle_radians) + y_translated * np.cos(angle_radians)
+    
+    # Translate points back to their original position
+    x_new = x_rotated + x_0
+    y_new = y_rotated + y_0
+    
+    return x_new, y_new
+
+
 #Define a piecewise mean camber line to differentiate suction points from pressure points
 def f(x):
     # Define the points for the first line segment
@@ -67,6 +94,11 @@ def f(x):
     y3 = 0.019
     x4 = 0.0
     y4 = 0.0  
+    # Rotate the points to account for angle of attack
+    x1,y1 = rotate_points(x1, y1, rotation_center_x, rotation_center_y, angle_degrees)
+    x2,y2 = rotate_points(x2, y2, rotation_center_x, rotation_center_y, angle_degrees)
+    x3,y3 = rotate_points(x3, y3, rotation_center_x, rotation_center_y, angle_degrees)
+    x4,y4 = rotate_points(x4, y4, rotation_center_x, rotation_center_y, angle_degrees)
     # Check which line segment to use based on the value of x
     if x <= x2:
         # Equation of the first line segment (y = mx + b)
