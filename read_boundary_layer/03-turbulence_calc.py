@@ -198,7 +198,6 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	edge_pressure[istreamwise] = data_dict['static_pressure_mean'][idx_delta_95,istreamwise]
 	#tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=100,maximum_stress=False)
 
-	beta_c[istreamwise] = delta_theta[istreamwise]/tau_wall[istreamwise]*data_dict['dpds'][istreamwise]
 	u_tau = np.sqrt(tau_wall[istreamwise]/density)
 	cf[istreamwise] = tau_wall[istreamwise]/q
 	RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf[istreamwise]/2)
@@ -219,6 +218,7 @@ dpds = np.zeros(np.size(smoothed_static_pressure)-1)
 dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-2])
 dpds_interp = np.interp(scoor,scoor[:-2],dpds)
 data_dict['dpds'] = dpds_interp
+beta_c = delta_theta/tau_wall*data_dict['dpds']
 
 # Save boundary layer info
 surface_data = pd.DataFrame({
