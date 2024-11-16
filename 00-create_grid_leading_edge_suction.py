@@ -43,10 +43,8 @@ print('instants in base b',b['Geometry'].keys())
 xvals=[-0.0307167,-0.0293987,-0.000383135,-0.00220858,-0.0307167]
 yvals=[0.0120501,0.0166085,0.00613008,0.00174928,0.0120501]
 
-#Define the center of rotation
-rotation_center_x = -0.067
-rotation_center_y = 0.0209
-angle_degrees = 7.0 # angle of rotation of airfoil with respect to 8 deg config
+#Define the aoa
+angle_of_attack = '15deg' # angle of rotation of airfoil with respect to 8 deg config
 # In[5]:
 x_coord_list = list(b['Geometry']['X'])
 x_coord_list = x_coord_list[::10000]
@@ -83,7 +81,7 @@ def rotate_points(x, y, x_0, y_0, angle_degrees):
 
 
 #Define a piecewise mean camber line to differentiate suction points from pressure points
-def f(x):
+def f_1(x):
     # Define the points for the first line segment
     x1 = -0.14
     y1 = 0.019
@@ -94,11 +92,6 @@ def f(x):
     y3 = 0.019
     x4 = 0.0
     y4 = 0.0  
-    # Rotate the points to account for angle of attack
-    x1,y1 = rotate_points(x1, y1, rotation_center_x, rotation_center_y, angle_degrees)
-    x2,y2 = rotate_points(x2, y2, rotation_center_x, rotation_center_y, angle_degrees)
-    x3,y3 = rotate_points(x3, y3, rotation_center_x, rotation_center_y, angle_degrees)
-    x4,y4 = rotate_points(x4, y4, rotation_center_x, rotation_center_y, angle_degrees)
     # Check which line segment to use based on the value of x
     if x <= x2:
         # Equation of the first line segment (y = mx + b)
@@ -107,6 +100,27 @@ def f(x):
         m=(y4-y3)/(x4-x3)
         # Handle values of x outside the defined segments
         return  m*x# You can choose to return a default value or raise an error
+    
+def f_2(x):
+    # Define the points for the first line segment
+    x1 = -0.14
+    y1 = 0.0276
+    x2 = -0.08
+    y2 = 0.0205
+    # Define the points for the second line segment
+    x3 = -0.08
+    y3 = 0.0205
+    x4 = 0.0
+    y4 = -0.009  
+    # Check which line segment to use based on the value of x
+    if x <= x2:
+        # Equation of the first line segment (y = mx + b)
+        m=(y2-y1)/(x2-x1)
+        return m*(x-x1) + y1
+    else:
+        m=(y4-y3)/(x4-x3)
+        # Handle values of x outside the defined segments
+        return  m*(x-x3) + y3# You can choose to return a default value or raise an error
 
 #Sort all points into two lists based on whether they are above or below the mean camber line
 # Create empty lists for the two subgroups
@@ -118,7 +132,10 @@ y_coord_pressure = []
 for i in range(len(x_coord)):
     x = x_coord[i]
     y = y_coord[i]
-    mean_camber = f(x)  # Calculate the mean camber for the current x
+    if angle_of_attack == '8deg':
+        mean_camber = f_1(x)  # Calculate the mean camber for the current x
+    elif angle_of_attack == '15deg':
+        mean_camber = f_2(x)
     print('mean_camber',mean_camber)
     print('y',y)
     if y > mean_camber:
