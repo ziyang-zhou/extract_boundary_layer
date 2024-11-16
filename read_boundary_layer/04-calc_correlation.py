@@ -47,6 +47,7 @@ mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path #Place to read BL_prof base
 bl_save_path = temporal.project_path + 'boundary_layer_profile/' #Place to save boundary layer dataframe
 result_save_path = project_path + 'result/'
+os.makedirs(result_save_path, exist_ok=True)
 
 probe_number = temporal.probe_number
 nb_points = temporal.nb_points #number of points across the boundary layer
