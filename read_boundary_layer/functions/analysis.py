@@ -269,8 +269,7 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                         L_scale[i] = -calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
                 else:
                     L_scale[i] = 0
-        scale = loc_array
-        return L_scale, scale
+        return L_scale, y[mask_plot_range]
 
     elif axis == 'row':
         for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
@@ -301,7 +300,7 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                     L_scale[i] = -calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
 
         scale = loc_array
-        return L_scale, scale
+        return L_scale, y[mask_plot_range]
 
     else:
         print('Invalid choice of axis for length scale calculation')
