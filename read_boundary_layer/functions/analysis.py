@@ -237,7 +237,8 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
 
     ki0 = find_nearest(x, x0)  # Find the x coordinate index of the origin
     mask_plot_range = (y > y0) & (y < y1)
-    L_scale = np.zeros(len(y[mask_plot_range]))
+    L_scale = []
+    L_coord = []
 
     if axis == 'column':
         for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
@@ -252,8 +253,8 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                 for j, y_i in enumerate(y[mask_integrate_range]):  # Moving point
                     p1 = pfluc[:, mask_integrate_range, :][:, j, ki0]
                     p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
-                    #p1 = butter_bandpass_filter(p1, 1600, 8000, fs, order=5)
-                    #p0 = butter_bandpass_filter(p0, 1600, 8000, fs, order=5)
+                    p1 = butter_bandpass_filter(p1, 1600, 8000, fs, order=5)
+                    p0 = butter_bandpass_filter(p0, 1600, 8000, fs, order=5)
                     c = get_velocity_corr(p0, p1)
                     Rxt_spectrum_aux.append(c)
                     loc_array.append(y_i)
@@ -264,12 +265,13 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                     Rxt_spectrum_aux = model(abs(loc_array - y0_i), L_fit)
                 if len(loc_array) > 0 : 
                     if direction == 'plus':
-                        L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
+                        L_scale.append(calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0]))
                     elif direction == 'minus':
-                        L_scale[i] = -calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
+                        L_scale.append(-calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0])))
                 else:
-                    L_scale[i] = 0
-        return L_scale, y[mask_plot_range]
+                    L_scale.append(0.0)
+                L_coord.append(y0_i)
+        return np.array(L_scale), np.array(L_coord)
 
     elif axis == 'row':
         for i, y0_i in enumerate(y[mask_plot_range]):  # Loop through the fixed point
@@ -284,8 +286,8 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                 for j, x_i in enumerate(x[mask_integrate_range]):  # Moving point
                     p1 = pfluc[:, mask_plot_range, :][:, :, mask_integrate_range][:, i, j]
                     p0 = pfluc[:, mask_plot_range, :][:, i, ki0]
-                    #p1 = butter_bandpass_filter(p1, 1600, 8000, fs, order=5)
-                    #p0 = butter_bandpass_filter(p0, 1600, 8000, fs, order=5)
+                    p1 = butter_bandpass_filter(p1, 1600, 8000, fs, order=5)
+                    p0 = butter_bandpass_filter(p0, 1600, 8000, fs, order=5)
                     c = get_velocity_corr(p0, p1)
                     Rxt_spectrum_aux.append(c)
                     loc_array.append(x_i)
@@ -295,12 +297,14 @@ def exp_fit_length_scale(pfluc, x, y, x0, y0, x1, y1, fs, delta_95, axis='column
                     L_fit = params[0]
                     Rxt_spectrum_aux = model(abs(loc_array - y0_i), L_fit)
                 if direction == 'plus':
-                    L_scale[i] = calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0])
+                    L_scale.append(calculate_length_scale(np.array(Rxt_spectrum_aux), np.array(loc_array) - loc_array[0]))
                 elif direction == 'minus':
-                    L_scale[i] = -calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0]))
+                    L_scale.append(-calculate_length_scale(np.flip(np.array(Rxt_spectrum_aux)), np.flip(np.array(loc_array) - loc_array[0])))
+                else:
+                    L_scale.append(0.0)
 
-        scale = loc_array
-        return L_scale, y[mask_plot_range]
+                L_coord.append(y0_i)
+        return np.array(L_scale), np.array(L_coord)
 
     else:
         print('Invalid choice of axis for length scale calculation')
@@ -348,7 +352,7 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
 
 def calculate_length_scale(Rxt_fit, loc_fit):
     """
-    Calculate the length scale by integrating Rxt_fit up to the first crossing below -0.05.
+    Calculate the length scale by integrating Rxt_fit up to the first crossing below 0.05.
 
     Parameters:
     - Rxt_fit: Array of values to integrate.
