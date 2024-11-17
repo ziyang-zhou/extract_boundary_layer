@@ -55,6 +55,7 @@ var = temporal.var
 timestep_size = temporal.timestep_size
 fs = 1/timestep_size
 timestep_interval = temporal.timestep_interval
+case_name = 'L08'
 
 # Set the total number of timesteps and the number of chunks
 step_per_chunk = temporal.step_per_chunk
@@ -260,9 +261,10 @@ if if_integrate_axis == True:
 		L_22_df.to_csv(probe_save_path + 'L22_{}_{}'.format(direction_list[i],integration_axis),index=False)
 
 #Calculate integral length scale 22+ field
-bl_param = pd.read_csv(bl_save_path + 'surface_parameter.csv')
+
 if if_integrate_field == True:
-	L_22_dict = {} # Initialize dict to store L22 field
+	bl_param = pd.read_csv(bl_save_path + '{}_surface_parameter.csv'.case_name)
+	L_22_dict = {} # Initialize dict to store L22 bl_param field
 	# Compute the integral length scale along the wall normal direction for each streamwise point
 	for i,x0_aux in enumerate(xcoor):
 		L_22_aux, _ = analysis.exp_fit_length_scale(pfluc,scoor,hcoor,scoor[i],h_start,scoor[i],h_end,axis='column',direction = 'plus')
