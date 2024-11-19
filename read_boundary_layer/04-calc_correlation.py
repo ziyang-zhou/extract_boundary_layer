@@ -229,10 +229,6 @@ for ki in range(0,np.shape(pfluc)[2]-1):                                        
 		p0 = butter_bandpass_filter(p0, 2500, 8000, fs, order=5)
 		c = analysis.get_velocity_corr(p0,p1)
 		Rxt_spectrum[l,ki] = c
-	# Fit the curve to exponential function for each streamwise location
-	params, _ = curve_fit(analysis.model, abs(hcoor), Rxt_spectrum[:,ki], p0=[1])
-	L_fit = params[0]
-	Rxt_spectrum[:,ki] = analysis.model(abs(hcoor), L_fit)
 
 print('shape of the matrix is',pfluc.shape)
 print('format is (time,wall normal,streamwise)')
@@ -286,9 +282,9 @@ if troubleshoot == True:
 		print('creating contour of timestep {}'.format(t))
 		fig,ax = plt.subplots(figsize=(8,8))
 		
-		CS = ax.contourf(S, H, pfluc[t,:,:], levels=levels, cmap=cmap)
-		ax.set_xlim([-0.2, 0.2])
-		ax.set_ylim([0, 1.0]) 
+		CS = ax.contourf(S/0.1356, H/0.1356, pfluc[t,:,:], levels=levels, cmap=cmap)
+		ax.set_xlim([-1.0, 0.0])
+		ax.set_ylim([0, 0.1]) 
 		ax.set_xlabel(r'$X/delta^{95}$', fontsize=22)
 		ax.set_ylabel(r'$H/delta^{95}$', fontsize=22)
 		# Add a colorbar
