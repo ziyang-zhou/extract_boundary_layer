@@ -292,5 +292,10 @@ if troubleshoot == True:
 		cbar.set_label('Velocity', fontsize=18)
 		plt.savefig(probe_save_path + 'velocity_contour_timestep_{}'.format(t))
 		plt.close()
+
+		plt.plot(hcoor,pfluc[t,:,ki0])
+		plt.ylim([-3.0,3.0])
+		plt.close()
+		plt.savefig(probe_save_path + 'vertical_velocity_profile_timestep_{}'.format(t))
 else:
 	None

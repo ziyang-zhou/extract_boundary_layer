@@ -189,7 +189,8 @@ def get_velocity_corr(signal_1,signal_2):
         #takes in two signals and outputs the cross-correlation
         signal_1 = signal_1 - np.mean(signal_1)
         signal_2 = signal_2 - np.mean(signal_2)
-        denominator = np.std(signal_1)*np.std(signal_2)
+        sig_std_max = np.max(np.std(signal_1),np.std(signal_2))
+        denominator = sig_std_max**2
         signal_1_signal_2 = np.stack((signal_1, signal_2), axis=0)
         numerator = np.cov(signal_1_signal_2)[0,1]
         cross_corr= numerator/denominator #normalize velocity signal

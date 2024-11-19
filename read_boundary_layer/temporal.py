@@ -33,5 +33,5 @@ if_read_boundary_velocity = False # Set as true for computation of mean velocity
 troubleshoot = False # Set as true if velocity contours are to be plotted
 xcoor0 = -0.019227 # x location of the integration axis
 probe_number = 21 # probe location at which to plot the interal length
-h_0_bar = 0.1 # Dimensionless wall normal position of fixed point. Normalized by delta_95
+h_0_bar = 0.2 # Dimensionless wall normal position of fixed point. Normalized by delta_95
 timestep_interval = 100 # interval at which to plot contours for troubleshooting
