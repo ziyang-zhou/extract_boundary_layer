@@ -229,6 +229,10 @@ for ki in range(0,np.shape(pfluc)[2]-1):                                        
 		p0 = butter_bandpass_filter(p0, 2500, 8000, fs, order=5)
 		c = analysis.get_velocity_corr(p0,p1)
 		Rxt_spectrum[l,ki] = c
+	# Fit the curve to exponential function for each streamwise location
+	params, _ = curve_fit(analysis.model, abs(hcoor), Rxt_spectrum[:,ki], p0=[1])
+	L_fit = params[0]
+	Rxt_spectrum[:,ki] = analysis.model(abs(hcoor), L_fit)
 
 print('shape of the matrix is',pfluc.shape)
 print('format is (time,wall normal,streamwise)')
