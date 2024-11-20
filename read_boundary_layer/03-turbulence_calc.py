@@ -197,6 +197,10 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	tau_wall[istreamwise] = abs((U_t[1] - U_t[0])/(hcoor[1]-hcoor[0])*kinematic_viscosity)
 	edge_pressure[istreamwise] = data_dict['static_pressure_mean'][idx_delta_95,istreamwise]
 
+	u_tau = np.sqrt(tau_wall[istreamwise]/density)
+	cf[istreamwise] = tau_wall[istreamwise]/q
+	RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf[istreamwise]/2)
+
 	#Obtain the parameters for Pargal model
 	y_plus = hcoor*u_tau/kinematic_viscosity
 	u_plus = U_t/u_tau
@@ -206,11 +210,6 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	y_idx = np.where(abs(D-0) < 0.1)[-1]
 	y_w[istreamwise] = y_plus[y_idx]
 
-
-	u_tau = np.sqrt(tau_wall[istreamwise]/density)
-	cf[istreamwise] = tau_wall[istreamwise]/q
-	RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf[istreamwise]/2)
-	#RT[istreamwise] = (delta_95[istreamwise]/Ue[istreamwise])/(kinematic_viscosity/u_tau**2)
 	bl_data = pd.DataFrame({
 		'h' : hcoor,
 		'U_t' : U_t,
