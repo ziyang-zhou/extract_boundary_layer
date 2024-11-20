@@ -2,6 +2,7 @@
 
 from antares import *
 from functions import analysis, extract_BL_params
+from scipy.interpolate import CubicSpline
 from scipy.signal import savgol_filter
 import vtk
 import matplotlib.pyplot as plt
@@ -169,10 +170,10 @@ for istreamwise in range(0,np.shape(data_dict['uv_mean'])[1]):                  
 	for iwallnormal in range(0,np.shape(data_dict['uv_mean'])[0]):                                       #wall normal index_point
 		U_n = data_dict['Un_fluc'][:,iwallnormal,istreamwise]
 		U_t = data_dict['Ut_fluc'][:,iwallnormal,istreamwise]
-		data_dict['uu_mean'][iwallnormal,istreamwise],data_dict['vv_mean'][iwallnormal,istreamwise],data_dict['uv_mean'][iwallnormal,istreamwise] = analysis.get_velocity_cov(U_t,U_n)
+		data_dict['uu_mean'][iwallnormal,istreamwise],data_dict['vv_mean'][iwallnormal,istreamwise],data_dict['uv_mean'][iwallnormal,istreamwise], = analysis.get_velocity_cov(U_t,U_n)
 
 # Compute delta_95, momentum thickness and displacement thickness
-delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall, edge_pressure, y_w = tuple(np.zeros(len(scoor)) for _ in range(11))
+delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall, edge_pressure, y_w, p_rms = tuple(np.zeros(len(scoor)) for _ in range(12))
 data_dict['static_pressure_mean'] = data_dict['static_pressure'].mean(axis=0,dtype=np.float64)
 data_dict['mag_velocity_rel_mean'] = data_dict['mag_velocity_rel'].mean(axis=0,dtype=np.float64)
 
@@ -181,6 +182,7 @@ print('Computing parameter of the boundary layer...')
 for istreamwise,streamwise_coor in enumerate(scoor):
 	data_dict['Ut_mean'][:,istreamwise][0] = 0.0 # Enforce 1st element velocity to be zero
 	data_dict['mag_velocity_rel_mean'][:,istreamwise][0] = 0.0 # Enforce 1st element velocity to be zero
+	hcoor[0] = 0.0
 	U_t = data_dict['Ut_mean'][:,istreamwise]
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
 	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
@@ -194,7 +196,12 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	Ue[istreamwise] = U_t[idx_delta_95]
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
-	tau_wall[istreamwise] = abs((U_t[1] - U_t[0])/(hcoor[1]-hcoor[0])*kinematic_viscosity)
+	
+	Utcls = CubicSpline(hcoor,U_t)
+	xsl = np.arange(0,0.0005,1e-7)
+	Ut_new = Utcls(xsl)
+	tau_wall[istreamwise] = abs((Ut_new[1] - Ut_new[0])/(hcoor[1]-hcoor[0])*kinematic_viscosity*density)
+	
 	edge_pressure[istreamwise] = data_dict['static_pressure_mean'][idx_delta_95,istreamwise]
 
 	u_tau = np.sqrt(tau_wall[istreamwise]/density)
@@ -213,7 +220,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
 
 	if not np.any(np.isnan(D)):
-		y_idx = np.where(abs(D) < 1.0)[0][-1]
+		y_idx = np.where(abs(D) < 5.0)[0][-1]
 		y_w[istreamwise] = y_plus[y_idx]
 
 	bl_data = pd.DataFrame({
