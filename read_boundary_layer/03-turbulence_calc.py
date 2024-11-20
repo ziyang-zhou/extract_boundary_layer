@@ -204,10 +204,14 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	#Obtain the parameters for Pargal model
 	y_plus = hcoor*u_tau/kinematic_viscosity
 	u_plus = U_t/u_tau
-	kappa = 0.3
-	B = -1.38
+	if istreamwise > len(scoor)//2: #APG
+		kappa = 0.3
+		B = -1.38
+	else: #ZPG
+		kappa = 0.41
+		B = 4.5
 	D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
-	y_idx = np.where(abs(D-0) < 0.1)[-1]
+	y_idx = np.where(abs(D) < 1.0)[0][-1]
 	y_w[istreamwise] = y_plus[y_idx]
 
 	bl_data = pd.DataFrame({
