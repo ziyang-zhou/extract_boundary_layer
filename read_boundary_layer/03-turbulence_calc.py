@@ -211,8 +211,10 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		kappa = 0.41
 		B = 4.5
 	D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
-	y_idx = np.where(abs(D) < 1.0)[0][-1]
-	y_w[istreamwise] = y_plus[y_idx]
+
+	if not np.any(np.isnan(D)):
+		y_idx = np.where(abs(D) < 1.0)[0][-1]
+		y_w[istreamwise] = y_plus[y_idx]
 
 	bl_data = pd.DataFrame({
 		'h' : hcoor,
