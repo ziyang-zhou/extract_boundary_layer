@@ -52,6 +52,7 @@ delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary
 density = 1.251
 Uinf = 16.6
 case_name = 'L08'
+chord = 0.1356
 
 mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
@@ -197,10 +198,10 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
 	
-	Utcls = CubicSpline(hcoor,U_t)
-	xsl = np.arange(0,0.0005,1e-7)
+	Utcls = CubicSpline(hcoor[:5],U_t[:5])
+	xsl = np.arange(0,8e-5,1e-5)
 	Ut_new = Utcls(xsl)
-	tau_wall[istreamwise] = abs((Ut_new[1] - Ut_new[0])/(hcoor[1]-hcoor[0])*kinematic_viscosity*density)
+	tau_wall[istreamwise] = abs((Ut_new[1] - Ut_new[0])/(xsl[1]-xsl[0])*kinematic_viscosity*density)
 	
 	edge_pressure[istreamwise] = data_dict['static_pressure_mean'][idx_delta_95,istreamwise]
 
@@ -219,8 +220,8 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		B = 4.5
 	D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
 
-	if not np.any(np.isnan(D)):
-		y_idx = np.where(abs(D) < 5.0)[0][-1]
+	if not np.any(np.isnan(D)) and not np.any(np.isinf(D)):
+		y_idx = np.where(abs(D) < 10.0)[0][-1]
 		y_w[istreamwise] = y_plus[y_idx]
 
 	bl_data = pd.DataFrame({
@@ -243,7 +244,7 @@ beta_c = delta_theta/tau_wall*data_dict['dpds']
 
 # Save boundary layer info
 surface_data = pd.DataFrame({
-	'streamwise location' : scoor,
+	'streamwise location' : xcoor + chord,
     'delta_95': delta_95,
     'delta_theta': delta_theta,
     'delta_star': delta_star,
