@@ -201,8 +201,8 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	#Utcls = CubicSpline(hcoor[:5],U_t[:5])
 	#xsl = np.arange(0,8e-5,1e-5)
 	#Ut_new = Utcls(xsl)
-	#tau_wall[istreamwise] = abs((Ut_new[1] - Ut_new[0])/(xsl[1]-xsl[0])*kinematic_viscosity*density)
-	tau_anna = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,npts_interp=50000,maximum_stress=False)
+	#tau_wall[istreamwise] = abs((Ut_new[1] - Ut_new[0])/(xsl[1]-xsl[0])*kinematic_viscosity*density) # WARNING : This method seems to give a massive overestimation
+	tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,npts_interp=50000,maximum_stress=False)
 	edge_pressure[istreamwise] = data_dict['static_pressure_mean'][idx_delta_95,istreamwise]
 
 	u_tau = np.sqrt(tau_wall[istreamwise]/density)
