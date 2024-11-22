@@ -198,11 +198,13 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
 	
-	#Utcls = CubicSpline(hcoor[:5],U_t[:5])
-	#xsl = np.arange(0,8e-5,1e-5)
-	#Ut_new = Utcls(xsl)
+	Utcls = CubicSpline(hcoor[:5],U_t[:5])
+	xsl = np.arange(0,8e-5,1e-5)
+	Ut_new = Utcls(xsl)
 	#tau_wall[istreamwise] = abs((Ut_new[1] - Ut_new[0])/(xsl[1]-xsl[0])*kinematic_viscosity*density) # WARNING : This method seems to give a massive overestimation
-	tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,npts_interp=50000,maximum_stress=False)
+
+	#tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,npts_interp=50000,maximum_stress=False)
+	tau_wall[istreamwise] = U_t[1]/hcoor[1]*kinematic_viscosity*density
 	edge_pressure[istreamwise] = data_dict['static_pressure_mean'][idx_delta_95,istreamwise]
 
 	u_tau = np.sqrt(tau_wall[istreamwise]/density)
@@ -227,6 +229,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	bl_data = pd.DataFrame({
 		'h' : hcoor,
 		'U_t' : U_t,
+		'mag_velocity_rel_mean' : mag_velocity_rel,
 		'dudy' : dudy_interp,
 		'uu_mean' : data_dict['uu_mean'][:,istreamwise],
 		'vv_mean' : data_dict['vv_mean'][:,istreamwise],
@@ -240,6 +243,15 @@ dpds = np.zeros(np.size(smoothed_static_pressure)-1)
 dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-1])
 dpds_interp = np.interp(scoor,scoor[:-2],dpds)
 data_dict['dpds'] = dpds_interp
+
+## Smooth derivative
+#from scipy import ndimage
+#dP=ndimage.gaussian_filter1d(edge_pressure[:-1],sigma=10, order=1, mode='nearest')
+#ds=np.diff(scoor)
+#dpds = dP/ds
+#dpds_interp = np.interp(scoor,scoor[:-1],dpds)
+#data_dict['dpds'] = dpds_interp
+
 beta_c = delta_theta/tau_wall*data_dict['dpds']
 
 # Save boundary layer info
