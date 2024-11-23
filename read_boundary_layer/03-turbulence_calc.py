@@ -135,18 +135,32 @@ else:
 
 for var in var_list:
 	if if_interpolate == True:
-		for ki in range(0,np.shape(data_dict[var])[2]-1):
-			for t in range(0,np.shape(data_dict[var])[0]-1):
-				i_zero = np.where(abs(data_dict[var][t,:,ki]) == 0)[0]
-				for i in i_zero:
-					if i+1 not in i_zero:
-						data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+1,ki])/2
-					else:
-						#Obtain the next non-zero value for interpolation
-						n=0
-						while (data_dict[var][t,i+n,ki]==0):
-							n+=1
-						data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+n,ki])/2
+		if data_dict[var].ndim == 3:
+			for ki in range(0,np.shape(data_dict[var])[2]-1):
+				for t in range(0,np.shape(data_dict[var])[0]-1):
+					i_zero = np.where(abs(data_dict[var][t,:,ki]) == 0)[0]
+					for i in i_zero:
+						if i+1 not in i_zero:
+							data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+1,ki])/2
+						else:
+							#Obtain the next non-zero value for interpolation
+							n=0
+							while (data_dict[var][t,i+n,ki]==0):
+								n+=1
+							data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+n,ki])/2
+		else: # variable is mean
+			for ki in range(0,np.shape(data_dict[var])[1]-1):
+					i_zero = np.where(abs(data_dict[var][:,ki]) == 0)[0]
+					for i in i_zero:
+						if i+1 not in i_zero:
+							data_dict[var][i,ki] = (data_dict[var][i-1,ki] + data_dict[var][i+1,ki])/2
+						else:
+							#Obtain the next non-zero value for interpolation
+							n=0
+							while (data_dict[var][i+n,ki]==0):
+								n+=1
+							data_dict[var][i,ki] = (data_dict[var][i-1,ki] + data_dict[var][i+n,ki])/2			
+
 
 # ------------------------------
 # Parameter calculation
