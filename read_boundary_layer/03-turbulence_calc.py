@@ -129,24 +129,25 @@ else:
 					data_dict[var] = np.concatenate((data_dict[var], data_append[np.newaxis,:,:]), axis=0)
 				print('data shape is {}'.format(np.shape(data_dict[var])))
 				print('chunk {} read'.format(j))
-
-	for var in var_list:
-		if if_interpolate == True:
-			for ki in range(0,np.shape(data_dict[var])[2]-1):
-				for t in range(0,np.shape(data_dict[var])[0]-1):
-					i_zero = np.where(abs(data_dict[var][t,:,ki]) == 0)[0]
-					for i in i_zero:
-						if i+1 not in i_zero:
-							data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+1,ki])/2
-						else:
-							#Obtain the next non-zero value for interpolation
-							n=0
-							while (data_dict[var][t,i+n,ki]==0):
-								n+=1
-							data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+n,ki])/2
 	# Save the boundary layer data
 	with open(bl_save_path + 'data_dict.pkl', 'wb') as f:
 		pickle.dump(data_dict, f)
+
+for var in var_list:
+	if if_interpolate == True:
+		for ki in range(0,np.shape(data_dict[var])[2]-1):
+			for t in range(0,np.shape(data_dict[var])[0]-1):
+				i_zero = np.where(abs(data_dict[var][t,:,ki]) == 0)[0]
+				for i in i_zero:
+					if i+1 not in i_zero:
+						data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+1,ki])/2
+					else:
+						#Obtain the next non-zero value for interpolation
+						n=0
+						while (data_dict[var][t,i+n,ki]==0):
+							n+=1
+						data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+n,ki])/2
+
 # ------------------------------
 # Parameter calculation
 # ------------------------------
@@ -163,12 +164,16 @@ if nbi is not 0:
 	data_dict['Ut_fluc'] = data_dict['U_t'] - np.tile(data_dict['Ut_mean'],(nbi,1,1))
 	data_dict['Un_fluc'] = data_dict['U_n'] - np.tile(data_dict['Un_mean'],(nbi,1,1))
 	data_dict['uu_mean'],data_dict['vv_mean'],data_dict['uv_mean'] = np.zeros((hcoor.shape[0],scoor.shape[0])),np.zeros((hcoor.shape[0],scoor.shape[0])),np.zeros((hcoor.shape[0],scoor.shape[0]))
+	data_dict['static_pressure_mean'] = data_dict['static_pressure'].mean(axis=0,dtype=np.float64)
+	data_dict['mag_velocity_rel_mean'] = data_dict['mag_velocity_rel'].mean(axis=0,dtype=np.float64)
 else:
 	data_dict['Ut_mean'] = data_dict['U_t']
 	data_dict['Un_mean'] = data_dict['U_n']
-	data_dict['Ut_fluc'] = np.ones((hcoor.shape[0],scoor.shape[0]))
-	data_dict['Un_fluc'] = np.ones((hcoor.shape[0],scoor.shape[0]))
+	data_dict['Ut_fluc'] = np.ones((5,hcoor.shape[0],scoor.shape[0]))
+	data_dict['Un_fluc'] = np.ones((5,hcoor.shape[0],scoor.shape[0]))
 	data_dict['uu_mean'],data_dict['vv_mean'],data_dict['uv_mean'] = np.ones((hcoor.shape[0],scoor.shape[0])),np.ones((hcoor.shape[0],scoor.shape[0])),np.ones((hcoor.shape[0],scoor.shape[0]))
+	data_dict['static_pressure_mean'] = data_dict['static_pressure']
+	data_dict['mag_velocity_rel_mean'] = data_dict['mag_velocity_rel']
 
 #Define the x and y coord array
 S,H =np.meshgrid(scoor,hcoor)
@@ -182,8 +187,7 @@ for istreamwise in range(0,np.shape(data_dict['uv_mean'])[1]):                  
 
 # Compute delta_95, momentum thickness and displacement thickness
 delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall, edge_pressure, y_w, p_rms = tuple(np.zeros(len(scoor)) for _ in range(12))
-data_dict['static_pressure_mean'] = data_dict['static_pressure'].mean(axis=0,dtype=np.float64)
-data_dict['mag_velocity_rel_mean'] = data_dict['mag_velocity_rel'].mean(axis=0,dtype=np.float64)
+
 
 print('Computing parameter of the boundary layer...')
 
