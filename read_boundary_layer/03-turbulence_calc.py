@@ -112,7 +112,8 @@ else:
 		r['filename'] = bl_read_path + 'BL_line_prof_{}_{}.h5'.format(starting_timestep+j*step_per_chunk,starting_timestep+(j+1)*(step_per_chunk))
 		BL_line_prof = r.read()
 		for var in var_list:
-			for n,i in enumerate(BL_line_prof[0].keys()[1 if total_timesteps > 1 else 0:]):
+			idx_start = 1 if total_timesteps > 1 else 0
+			for n,i in enumerate(BL_line_prof[0].keys()[idx_start:]):
 				for m in range(len(xcoor)):  # read all spatial locations in the current timestep
 					profile_append = np.array(BL_line_prof[0][i][var][m])
 					if (m==0):
@@ -122,9 +123,10 @@ else:
 					else :
 						profile = np.concatenate((profile, profile_append[:,np.newaxis]), axis=1)
 				data_append = profile
-				if (n == 0) and (j == 0):
+				print('n {} j {}'.format(n,j))
+				if (n + j == 0):
 					data_dict[var] = data_append
-				elif (n == 1) and (j == 0):
+				elif (n + j == 1):
 					data_dict[var] = np.concatenate((data_dict[var][np.newaxis,:,:], data_append[np.newaxis,:,:]), axis=0)
 				else:
 					data_dict[var] = np.concatenate((data_dict[var], data_append[np.newaxis,:,:]), axis=0)
@@ -229,15 +231,16 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	Ut_new = Ut_interp(xsl)
 	tau_wall_aux = Ut_new[1]/xsl[1]*kinematic_viscosity*density
 	u_tau_aux = np.sqrt(tau_wall_aux/density)
-	plt.scatter(hcoor[:6]*u_tau_aux/kinematic_viscosity,U_t[:6]/u_tau_aux,label='data')
-	plt.scatter(xsl*u_tau_aux/kinematic_viscosity,Ut_new/u_tau_aux,label='interpolated')
-	plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000),label='y+ = u+')
-	plt.xlabel('y+')
-	plt.ylabel('U+')
-	plt.xlim([0.01,10])
-	plt.xscale('log')
-	plt.legend()
-	plt.savefig(bl_save_path + 'FIG/log_law_check.jpg')
+	if istreamwise%10 == 0:
+		plt.scatter(hcoor[:6]*u_tau_aux/kinematic_viscosity,U_t[:6]/u_tau_aux,label='data')
+		plt.scatter(xsl*u_tau_aux/kinematic_viscosity,Ut_new/u_tau_aux,label='interpolated')
+		plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000),label='y+ = u+')
+		plt.xlabel('y+')
+		plt.ylabel('U+')
+		plt.xlim([0.01,10])
+		plt.xscale('log')
+		plt.legend()
+		plt.savefig(bl_save_path + 'FIG/log_law_check_{}.jpg'.format(istreamwise))
 	tau_wall[istreamwise] = abs((Ut_new[1])/(xsl[1])*kinematic_viscosity*density) # WARNING : This method seems to give a massive overestimation
 
 	#tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,npts_interp=50000,maximum_stress=False)
