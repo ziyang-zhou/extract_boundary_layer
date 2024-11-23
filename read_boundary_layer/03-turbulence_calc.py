@@ -61,7 +61,7 @@ bl_save_path = temporal.project_path + 'boundary_layer_profile/'
 nb_points = temporal.nb_points #number of points across the boundary layer
 var_list = ['U_n','U_t','static_pressure','mag_velocity_rel'] #variable used for the cross correlation contour
 timestep_size = temporal.timestep_size
-if_interpolate = True
+if_interpolate = temporal.if_interpolate
 kinematic_viscosity = eval(temporal.kinematic_viscosity)
 
 # Set the total number of timesteps and the number of chunks
@@ -111,7 +111,7 @@ else:
 		r['filename'] = bl_read_path + 'BL_line_prof_{}_{}.h5'.format(starting_timestep+j*step_per_chunk,starting_timestep+(j+1)*(step_per_chunk))
 		BL_line_prof = r.read()
 		for var in var_list:
-			for n,i in enumerate(BL_line_prof[0].keys()[1:]):
+			for n,i in enumerate(BL_line_prof[0].keys()[1 if total_timesteps > 1 else 0:]):
 				for m in range(len(xcoor)):  # read all spatial locations in the current timestep
 					profile_append = np.array(BL_line_prof[0][i][var][m])
 					if (m==0):
@@ -150,22 +150,29 @@ else:
 # ------------------------------
 # Parameter calculation
 # ------------------------------
+if data_dict['static_pressure'].ndim == 2:
+	nbi = 0 # this means only the mean frame is available
+else:
+	nbi = data_dict['static_pressure'].shape[0] # number of instants
 
-# Compute reynolds stress
-data_dict['Ut_mean'] = data_dict['U_t'].mean(axis=0,dtype=np.float64)
-data_dict['Un_mean'] = data_dict['U_n'].mean(axis=0,dtype=np.float64)
+if nbi is not 0:
+	# Compute reynolds stress
+	data_dict['Ut_mean'] = data_dict['U_t'].mean(axis=0,dtype=np.float64)
+	data_dict['Un_mean'] = data_dict['U_n'].mean(axis=0,dtype=np.float64)
+	#Compute the arithmetic mean along the specified axis.
+	data_dict['Ut_fluc'] = data_dict['U_t'] - np.tile(data_dict['Ut_mean'],(nbi,1,1))
+	data_dict['Un_fluc'] = data_dict['U_n'] - np.tile(data_dict['Un_mean'],(nbi,1,1))
+	data_dict['uu_mean'],data_dict['vv_mean'],data_dict['uv_mean'] = np.zeros((hcoor.shape[0],scoor.shape[0])),np.zeros((hcoor.shape[0],scoor.shape[0])),np.zeros((hcoor.shape[0],scoor.shape[0]))
+else:
+	data_dict['Ut_mean'] = data_dict['U_t']
+	data_dict['Un_mean'] = data_dict['U_n']
+	data_dict['Ut_fluc'] = np.ones((hcoor.shape[0],scoor.shape[0]))
+	data_dict['Un_fluc'] = np.ones((hcoor.shape[0],scoor.shape[0]))
+	data_dict['uu_mean'],data_dict['vv_mean'],data_dict['uv_mean'] = np.ones((hcoor.shape[0],scoor.shape[0])),np.ones((hcoor.shape[0],scoor.shape[0])),np.ones((hcoor.shape[0],scoor.shape[0]))
 
-nbi = data_dict['static_pressure'].shape[0] # number of instants
-#Compute the arithmetic mean along the specified axis.
-data_dict['Ut_fluc'] = data_dict['U_t'] - np.tile(data_dict['Ut_mean'],(nbi,1,1))
-data_dict['Un_fluc'] = data_dict['U_n'] - np.tile(data_dict['Un_mean'],(nbi,1,1))
-
-data_dict['uu_mean'],data_dict['vv_mean'],data_dict['uv_mean'] = np.zeros((hcoor.shape[0],scoor.shape[0])),np.zeros((hcoor.shape[0],scoor.shape[0])),np.zeros((hcoor.shape[0],scoor.shape[0]))
 #Define the x and y coord array
 S,H =np.meshgrid(scoor,hcoor)
-
 print('Computing reynolds stress in the boundary layer...')
-
 #Calculate the rms for each point in space
 for istreamwise in range(0,np.shape(data_dict['uv_mean'])[1]):                                          #streamwise index_point
 	for iwallnormal in range(0,np.shape(data_dict['uv_mean'])[0]):                                       #wall normal index_point
@@ -198,9 +205,9 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
 	
-	Utcls = CubicSpline(hcoor[:5],U_t[:5])
-	xsl = np.arange(0,8e-5,1e-5)
-	Ut_new = Utcls(xsl)
+	#Utcls = CubicSpline(hcoor[:5],U_t[:5])
+	#xsl = np.arange(0,8e-5,1e-5)
+	#Ut_new = Utcls(xsl)
 	#tau_wall[istreamwise] = abs((Ut_new[1] - Ut_new[0])/(xsl[1]-xsl[0])*kinematic_viscosity*density) # WARNING : This method seems to give a massive overestimation
 
 	#tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,npts_interp=50000,maximum_stress=False)
