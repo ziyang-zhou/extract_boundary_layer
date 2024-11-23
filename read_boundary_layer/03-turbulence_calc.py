@@ -112,7 +112,7 @@ else:
 		r['filename'] = bl_read_path + 'BL_line_prof_{}_{}.h5'.format(starting_timestep+j*step_per_chunk,starting_timestep+(j+1)*(step_per_chunk))
 		BL_line_prof = r.read()
 		for var in var_list:
-			idx_start = 1 if total_timesteps > 1 else 0
+			idx_start = 1 if step_per_chunk > 1 else 0
 			for n,i in enumerate(BL_line_prof[0].keys()[idx_start:]):
 				for m in range(len(xcoor)):  # read all spatial locations in the current timestep
 					profile_append = np.array(BL_line_prof[0][i][var][m])
