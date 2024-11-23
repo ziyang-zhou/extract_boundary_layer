@@ -2,7 +2,7 @@
 
 from antares import *
 from functions import analysis, extract_BL_params
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, interp1d
 from scipy.signal import savgol_filter
 import vtk
 import matplotlib.pyplot as plt
@@ -71,6 +71,7 @@ starting_timestep = temporal.starting_timestep
 num_chunks = (total_timesteps - starting_timestep) // step_per_chunk
 
 os.makedirs(bl_save_path, exist_ok=True)
+os.makedirs(bl_save_path + 'FIG/', exist_ok=True)
 
 #Read the mesh
 r=Reader('hdf_antares')
@@ -223,13 +224,24 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
 	
-	#Utcls = CubicSpline(hcoor[:5],U_t[:5])
-	#xsl = np.arange(0,8e-5,1e-5)
-	#Ut_new = Utcls(xsl)
-	#tau_wall[istreamwise] = abs((Ut_new[1] - Ut_new[0])/(xsl[1]-xsl[0])*kinematic_viscosity*density) # WARNING : This method seems to give a massive overestimation
+	Ut_interp = interp1d(hcoor[:6],U_t[:6],kind='quadratic')
+	xsl = np.arange(0,hcoor[5],1e-6)
+	Ut_new = Ut_interp(xsl)
+	tau_wall_aux = Ut_new[1]/xsl[1]*kinematic_viscosity*density
+	u_tau_aux = np.sqrt(tau_wall_aux/density)
+	plt.scatter(hcoor[:6]*u_tau_aux/kinematic_viscosity,U_t[:6]/u_tau_aux,label='data')
+	plt.scatter(xsl*u_tau_aux/kinematic_viscosity,Ut_new/u_tau_aux,label='interpolated')
+	plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000),label='y+ = u+')
+	plt.xlabel('y+')
+	plt.ylabel('U+')
+	plt.xlim([0.01,10])
+	plt.xscale('log')
+	plt.legend()
+	plt.savefig(bl_save_path + 'FIG/log_law_check.jpg')
+	tau_wall[istreamwise] = abs((Ut_new[1])/(xsl[1])*kinematic_viscosity*density) # WARNING : This method seems to give a massive overestimation
 
 	#tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,npts_interp=50000,maximum_stress=False)
-	tau_wall[istreamwise] = U_t[1]/hcoor[1]*kinematic_viscosity*density
+	#tau_wall[istreamwise] = U_t[1]/hcoor[1]*kinematic_viscosity*density
 	edge_pressure[istreamwise] = data_dict['static_pressure_mean'][idx_delta_95,istreamwise]
 
 	u_tau = np.sqrt(tau_wall[istreamwise]/density)
