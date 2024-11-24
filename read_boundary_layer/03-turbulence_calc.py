@@ -226,10 +226,8 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
 	
-	Ut_interp = interp1d(hcoor[:6],U_t[:6],kind='quadratic')
-	xsl = np.arange(0,hcoor[5],1e-6)
-	Ut_new = Ut_interp(xsl)
-	tau_wall_aux = Ut_new[1]/xsl[1]*kinematic_viscosity*density
+	tau_spl = CubicSpline(hcoor, U_t)
+	tau_wall_aux = tau_spl.c[-2, 1] # Use the gradient of the second spline to the wall as dudy
 	u_tau_aux = np.sqrt(tau_wall_aux/density)
 	if istreamwise%10 == 0:
 		plt.scatter(hcoor[:6]*u_tau_aux/kinematic_viscosity,U_t[:6]/u_tau_aux,label='data')
