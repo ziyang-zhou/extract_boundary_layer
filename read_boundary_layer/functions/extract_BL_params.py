@@ -6,16 +6,15 @@ import math
 import scipy.spatial
 import scipy.integrate
 import scipy.interpolate as intp
-
+import pdb
 from scipy.interpolate import interp1d
 from scipy.integrate import simps
 
-
-def sliding_avg(data,*args, **kwargs):
-    npts= kwargs.get('npts', 5)
-    w = [1.0/npts]*npts
-    data_filt=np.convolve(data,w,mode='valid')
-    return data_filt
+def normalize_vector(vec):
+    magnitude = np.linalg.norm(vec) # Compute the magnitude using NumPy
+    if magnitude == 0:
+        raise ValueError("Cannot normalize a zero vector")
+    return vec / magnitude
 
 def find_zero_crossing(data):
     zero_crossing=np.where(np.diff(np.signbit(data)))[0]
@@ -229,22 +228,27 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
 
   BL_line_prof=Base() #reads all the cfd domain data into a new base which contains flow data on the BL lines
   BL_line_prof.init(zones=BL_line_geom.keys(),instants=b_vol[0].keys())#does it for all the timesteps
-
+  
   successful_extraction={}
   for zn in BL_line_geom.keys():
     successful_extraction[zn]=[]
 
   for zn in BL_line_geom.keys():
-
-    for ihH in progress_bar(range(0,nb_cuts-1), label='extraction BL h/H on {0:s} '.format(zn)):
+    i=0
+    for ihH in range(0,nb_cuts-1):
+      i+=1
       print('ihH',ihH)
       z_middle = int(len(BL_line_geom[zn][0]['x'][ihH,0,:])/2) #obtain the middle index of z
       pt1=np.array([BL_line_geom[zn][0]['x'][ihH,0,z_middle],BL_line_geom[zn][0]['y'][ihH,0,z_middle],0.0])
       #print('pt1',pt1)
       n_vec=np.array([BL_line_geom[zn][0]['norm_x'][ihH,0,z_middle],BL_line_geom[zn][0]['norm_y'][ihH,0,z_middle],BL_line_geom[zn][0]['norm_z'][ihH,0,z_middle]])
-      #mag_n_vec=(n_vec[0]**2+n_vec[1]**2+n_vec[2]**2)**0.5
+      n_vec=normalize_vector(n_vec)
+      mag_n_vec=(n_vec[0]**2+n_vec[1]**2+n_vec[2]**2)**0.5
+      print('n_vec :',n_vec)
+      print('mag n vec',mag_n_vec)
       pt2=pt1+length_extraction*n_vec
-
+      normal_angle = np.degrees(np.arctan(n_vec[0]/n_vec[1]))
+      print('normal angle : ',normal_angle)
       if non_uniform and factor_spacing is not None: #use of antares to interpolate data over the BL line
         t=Treatment('tanhline')
         t['base']=b_vol
@@ -270,10 +274,13 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
         line.compute('h=((x-{0:f})**2+(y-{1:f})**2+(z-{2:f})**2)**0.5'.format(pt1[0],pt1[1],pt1[2]))
         # Compute tangential velocity
         line.compute('U_n={0:s}*{3:f}+{1:s}*{4:f}+{2:s}*{5:f}'.format(relative_velocity_vec[0],relative_velocity_vec[1],relative_velocity_vec[2],n_vec[0],n_vec[1],n_vec[2]))
-        line.compute('U_tx={0:s}-U_n*{1:f}'.format(relative_velocity_vec[0],n_vec[0]))
-        line.compute('U_ty={0:s}-U_n*{1:f}'.format(relative_velocity_vec[1],n_vec[1]))
-        line.compute('U_tz={0:s}-U_n*{1:f}'.format(relative_velocity_vec[2],n_vec[2]))
-        line.compute('U_t=(U_tx*U_tx+U_ty*U_ty+U_tz*U_tz)**0.5')
+        #line.compute('U_tx={0:s}-U_n*{1:f}'.format(relative_velocity_vec[0],n_vec[0]))
+        #line.compute('U_ty={0:s}-U_n*{1:f}'.format(relative_velocity_vec[1],n_vec[1]))
+        #line.compute('U_tz={0:s}-U_n*{1:f}'.format(relative_velocity_vec[2],n_vec[2]))
+        #line.compute('U_t=(U_tx*U_tx+U_ty*U_ty+U_tz*U_tz)**0.5')
+        line.compute('mag_velocity_xy=({0:s}**2+{1:s}**2)**0.5'.format(relative_velocity_vec[0],relative_velocity_vec[1]))
+        line.compute('U_t=(mag_velocity_xy**2-U_n**2)**0.5')
+
 
       if line is not None:
         if 'mag_velocity_rel' not in line[0][0].keys('node'):
@@ -312,10 +319,15 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
         for it in range(nb_inst):
           for iv,var in enumerate(var_list):
             data_BL[ihH,:current_nb_pts,iv,it]=line[0][it][var]
-            #print('line velocity',line[0][it]['U_t'])
       else:
         print('line is undefined for ihH',ihH)
-    
+      print('line Un : ',line[0][it]['U_n'])
+      print('line Ut : ',line[0][it]['U_t'])
+      x_velocity = line[0][it]['x_velocity']
+      y_velocity = line[0][it]['y_velocity']
+      #print('powerviz Uxt : {} Uyt : {}'.format(x_velocity*np.cos(normal_angle),y_velocity*np.sin(normal_angle)))
+      print('powerviz Ut : ',x_velocity*np.cos(np.radians(normal_angle)) - y_velocity*np.sin(np.radians(normal_angle)))
+      print('powerviz Un : ',x_velocity*np.sin(np.radians(normal_angle)) + y_velocity*np.cos(np.radians(normal_angle)))
     for it in range(nb_inst):
       print('instance',it,'read')
       for iv,var in enumerate(var_list):
