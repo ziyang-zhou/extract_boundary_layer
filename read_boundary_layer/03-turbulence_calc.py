@@ -192,9 +192,12 @@ delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall, edge_pr
 print('Computing parameter of the boundary layer...')
 
 for istreamwise,streamwise_coor in enumerate(scoor):
-	data_dict['Ut_mean'][:,istreamwise][0] = 0.0 # Enforce 1st element velocity to be zero
-	data_dict['mag_velocity_rel_mean'][:,istreamwise][0] = 0.0 # Enforce 1st element velocity to be zero
-	hcoor[0] = 0.0
+	# extrapolate to obtain the wall value
+	Ut_f = interp1d(hcoor[1:3], data_dict['Ut_mean'][1:3,istreamwise][1], kind='linear', fill_value="extrapolate")
+	Umag_f = interp1d(hcoor[1:3], data_dict['mag_velocity_rel_mean'][1:3,istreamwise][1], kind='linear', fill_value="extrapolate")
+	data_dict['Ut_mean'][:,istreamwise][0] = Ut_f(0.0)
+	data_dict['mag_velocity_rel_mean'][:,istreamwise][0] = Umag_f(0.0)
+
 	U_t = data_dict['Ut_mean'][:,istreamwise]
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
 	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
