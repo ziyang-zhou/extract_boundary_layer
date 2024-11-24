@@ -228,7 +228,9 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	
 	tau_spl = CubicSpline(hcoor, U_t)
 	dudy_wall = tau_spl.c[-2, 1] # Use the gradient of the second spline to the wall as dudy
-	u_tau_aux = np.sqrt(dudy_wall/density)
+	tau_wall[istreamwise] = dudy_wall*kinematic_viscosity*density
+	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
+
 	if istreamwise%10 == 0:
 		plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
 		plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000),label='y+ = u+')
@@ -238,8 +240,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		plt.xscale('log')
 		plt.legend()
 		plt.savefig(bl_save_path + 'FIG/log_law_check_{}.jpg'.format(istreamwise))
-	tau_wall[istreamwise] = dudy_wall*kinematic_viscosity*density # WARNING : This method seems to give a massive overestimation
-
+	
 	#tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,npts_interp=50000,maximum_stress=False)
 	#tau_wall[istreamwise] = U_t[1]/hcoor[1]*kinematic_viscosity*density
 	edge_pressure[istreamwise] = data_dict['static_pressure_mean'][idx_delta_95,istreamwise]
