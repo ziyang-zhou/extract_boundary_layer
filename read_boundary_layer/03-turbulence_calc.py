@@ -3,6 +3,7 @@
 from antares import *
 from functions import analysis, extract_BL_params
 from scipy.interpolate import CubicSpline, interp1d
+from scipy.optimize import curve_fit
 from scipy.signal import savgol_filter
 import vtk
 import matplotlib.pyplot as plt
@@ -19,29 +20,9 @@ import pdb
 # Defined functions
 # ---------------------
 
-def fit_and_derivative(x, y, degree=3):
-    """
-    Fits the given data (x, y) to a polynomial of the specified degree,
-    and computes its first derivative.
-    
-    Parameters:
-    - x: Independent variable (input data).
-    - y: Dependent variable (data to fit).
-    - degree: The degree of the polynomial to fit (default is 1 for linear).
-    
-    Returns:
-    - p: Coefficients of the fitted polynomial.
-    - first_derivative: The first derivative of the polynomial at each x.
-    """
-    # Fit the data to a polynomial of the specified degree
-    p = np.polyfit(x, y, degree)  # p contains the polynomial coefficients
-    # Create the polynomial from the coefficients
-    poly = np.poly1d(p)
-    # Compute the first derivative of the polynomial
-    poly_derivative = poly.deriv(1)  # First derivative of the polynomial
-    # Calculate the values of the first derivative at each x
-    first_derivative = poly_derivative(x)
-    return p, first_derivative
+def Ut_function(hcoor,tau_wall,density=1.25,kinematic_viscosity=1.44e-5):
+	Ut = hcoor*tau_wall/kinematic_viscosity/density
+	return Ut
 
 # ------------------
 # Reading the files
@@ -58,7 +39,7 @@ mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
 bl_save_path = temporal.project_path + 'boundary_layer_profile/'
 
-wall_shear_method = 'smoothed_derivative' #smoothed_derivative or spline
+wall_shear_method = 'shear_fit' #smoothed_derivative or spline or shear_fit
 
 nb_points = temporal.nb_points #number of points across the boundary layer
 var_list = ['U_n','U_t','static_pressure','mag_velocity_rel'] #variable used for the cross correlation contour
@@ -234,6 +215,9 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		tau_wall[istreamwise] = dudy_wall*kinematic_viscosity*density
 	elif wall_shear_method == 'smoothed_derivative':
 		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=100,maximum_stress=False)
+	elif wall_shear_method == 'shear_fit':
+		params, _ = curve_fit(Ut_function, hcoor[1:3], U_t[1:3], p0=[1])
+		tau_wall[istreamwise] = params[0]
 
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
