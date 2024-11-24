@@ -244,11 +244,11 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
       n_vec=np.array([BL_line_geom[zn][0]['norm_x'][ihH,0,z_middle],BL_line_geom[zn][0]['norm_y'][ihH,0,z_middle],BL_line_geom[zn][0]['norm_z'][ihH,0,z_middle]])
       n_vec=normalize_vector(n_vec)
       mag_n_vec=(n_vec[0]**2+n_vec[1]**2+n_vec[2]**2)**0.5
-      print('n_vec :',n_vec)
-      print('mag n vec',mag_n_vec)
+      #print('n_vec :',n_vec)
+      #print('mag n vec',mag_n_vec)
       pt2=pt1+length_extraction*n_vec
       normal_angle = np.degrees(np.arctan(n_vec[0]/n_vec[1]))
-      print('normal angle : ',normal_angle)
+      #print('normal angle : ',normal_angle)
       if non_uniform and factor_spacing is not None: #use of antares to interpolate data over the BL line
         t=Treatment('tanhline')
         t['base']=b_vol
@@ -321,13 +321,13 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
             data_BL[ihH,:current_nb_pts,iv,it]=line[0][it][var]
       else:
         print('line is undefined for ihH',ihH)
-      print('line Un : ',line[0][it]['U_n'])
-      print('line Ut : ',line[0][it]['U_t'])
+      #print('line Un : ',line[0][it]['U_n'])
+      #print('line Ut : ',line[0][it]['U_t'])
       x_velocity = line[0][it]['x_velocity']
       y_velocity = line[0][it]['y_velocity']
       #print('powerviz Uxt : {} Uyt : {}'.format(x_velocity*np.cos(normal_angle),y_velocity*np.sin(normal_angle)))
-      print('powerviz Ut : ',x_velocity*np.cos(np.radians(normal_angle)) - y_velocity*np.sin(np.radians(normal_angle)))
-      print('powerviz Un : ',x_velocity*np.sin(np.radians(normal_angle)) + y_velocity*np.cos(np.radians(normal_angle)))
+      #print('powerviz Ut : ',x_velocity*np.cos(np.radians(normal_angle)) - y_velocity*np.sin(np.radians(normal_angle)))
+      #print('powerviz Un : ',x_velocity*np.sin(np.radians(normal_angle)) + y_velocity*np.cos(np.radians(normal_angle)))
     for it in range(nb_inst):
       print('instance',it,'read')
       for iv,var in enumerate(var_list):

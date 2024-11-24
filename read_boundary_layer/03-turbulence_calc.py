@@ -39,7 +39,7 @@ mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
 bl_save_path = temporal.project_path + 'boundary_layer_profile/'
 
-wall_shear_method = 'shear_fit' #smoothed_derivative or spline or shear_fit
+wall_shear_method = 'legacy_spline' #smoothed_derivative or spline or shear_fit or legacy_spline
 
 nb_points = temporal.nb_points #number of points across the boundary layer
 var_list = ['U_n','U_t','static_pressure','mag_velocity_rel'] #variable used for the cross correlation contour
@@ -193,10 +193,8 @@ print('Computing parameter of the boundary layer...')
 
 for istreamwise,streamwise_coor in enumerate(scoor):
 	# extrapolate to obtain the wall value
-	Ut_f = interp1d(hcoor[1:3], data_dict['Ut_mean'][1:3,istreamwise][1], kind='linear', fill_value="extrapolate")
-	Umag_f = interp1d(hcoor[1:3], data_dict['mag_velocity_rel_mean'][1:3,istreamwise][1], kind='linear', fill_value="extrapolate")
-	data_dict['Ut_mean'][:,istreamwise][0] = Ut_f(0.0)
-	data_dict['mag_velocity_rel_mean'][:,istreamwise][0] = Umag_f(0.0)
+	data_dict['Ut_mean'][:,istreamwise][0] = 0.0
+	data_dict['mag_velocity_rel_mean'][:,istreamwise][0] = 0.0
 
 	U_t = data_dict['Ut_mean'][:,istreamwise]
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
@@ -217,14 +215,14 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		dudy_wall = tau_spl.c[-2,0]
 		tau_wall[istreamwise] = dudy_wall*kinematic_viscosity*density
 	elif wall_shear_method == 'legacy_spline':
-		cs = CubicSpline(hcoor,U_t)
+		cs = CubicSpline(hcoor[1:],U_t[1:])
 		x_0 = 0
 		dudy_wall = cs(x_0, 1)
 		tau_wall[istreamwise] = dudy_wall*kinematic_viscosity*density
 	elif wall_shear_method == 'smoothed_derivative':
 		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=100,maximum_stress=False)
 	elif wall_shear_method == 'shear_fit':
-		params, _ = curve_fit(Ut_function, hcoor[1:3], U_t[1:3], p0=[1.0,0.3],kinematic_viscosity=kinematic_viscosity,density=density)
+		params, _ = curve_fit(Ut_function, hcoor[1:8], U_t[1:8], p0=[1.0,0.3])
 		tau_wall[istreamwise] = params[0]
 
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
