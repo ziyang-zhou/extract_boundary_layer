@@ -213,6 +213,11 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		tau_spl = CubicSpline(hcoor[1:], U_t[1:], bc_type = 'natural')
 		dudy_wall = tau_spl.c[-2,0]
 		tau_wall[istreamwise] = dudy_wall*kinematic_viscosity*density
+	elif wall_shear_method == 'legacy_spline':
+		cs = CubicSpline(hcoor,U_t)
+		x_0 = 0
+		dudy_wall = cs(x_0, 1)
+		tau_wall[istreamwise] = dudy_wall*kinematic_viscosity*density
 	elif wall_shear_method == 'smoothed_derivative':
 		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=100,maximum_stress=False)
 	elif wall_shear_method == 'shear_fit':
