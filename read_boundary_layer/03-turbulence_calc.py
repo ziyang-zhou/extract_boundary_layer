@@ -20,8 +20,8 @@ import pdb
 # Defined functions
 # ---------------------
 
-def Ut_function(hcoor,tau_wall,density=1.25,kinematic_viscosity=1.44e-5):
-	Ut = hcoor*tau_wall/kinematic_viscosity/density
+def Ut_function(hcoor,tau_wall,offset,density=1.25,kinematic_viscosity=1.44e-5):
+	Ut = hcoor*tau_wall/kinematic_viscosity/density+offset
 	return Ut
 
 # ------------------
@@ -216,7 +216,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	elif wall_shear_method == 'smoothed_derivative':
 		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=100,maximum_stress=False)
 	elif wall_shear_method == 'shear_fit':
-		params, _ = curve_fit(Ut_function, hcoor[1:3], U_t[1:3], p0=[1])
+		params, _ = curve_fit(Ut_function, hcoor[1:3], U_t[1:3], p0=[1.0,0.3],kinematic_viscosity=kinematic_viscosity,density=density)
 		tau_wall[istreamwise] = params[0]
 
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
@@ -237,7 +237,8 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 
 	u_tau = np.sqrt(tau_wall[istreamwise]/density)
 	cf[istreamwise] = tau_wall[istreamwise]/q
-	RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf[istreamwise]/2)
+	#RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf[istreamwise]/2)
+	RT[istreamwise] = (delta_95[istreamwise]/Ue[istreamwise])/(kinematic_viscosity/u_tau**2)
 
 	#Obtain the parameters for Pargal model
 	y_plus = hcoor*u_tau/kinematic_viscosity
