@@ -58,6 +58,8 @@ mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
 bl_save_path = temporal.project_path + 'boundary_layer_profile/'
 
+wall_shear_method = 'smoothed_derivative' #smoothed_derivative or spline
+
 nb_points = temporal.nb_points #number of points across the boundary layer
 var_list = ['U_n','U_t','static_pressure','mag_velocity_rel'] #variable used for the cross correlation contour
 timestep_size = temporal.timestep_size
@@ -225,10 +227,14 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	Ue[istreamwise] = U_t[idx_delta_95]
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
-	
-	tau_spl = CubicSpline(hcoor, U_t)
-	dudy_wall = tau_spl.c[-2, 1] # Use the gradient of the second spline to the wall as dudy
-	tau_wall[istreamwise] = dudy_wall*kinematic_viscosity*density
+
+	if wall_shear_method == 'spline': 	
+		tau_spl = CubicSpline(hcoor[1:], U_t[1:], bc_type = 'natural')
+		dudy_wall = tau_spl.c[-2,0]
+		tau_wall[istreamwise] = dudy_wall*kinematic_viscosity*density
+	elif wall_shear_method == 'smoothed_derivative':
+		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=100,maximum_stress=False)
+
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
 	if istreamwise%10 == 0:
@@ -236,7 +242,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000),label='y+ = u+')
 		plt.xlabel('y+')
 		plt.ylabel('U+')
-		plt.xlim([0.01,10])
+		plt.xlim([0.1,100])
 		plt.xscale('log')
 		plt.legend()
 		plt.savefig(bl_save_path + 'FIG/log_law_check_{}.jpg'.format(istreamwise))
