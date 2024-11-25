@@ -24,6 +24,13 @@ def Ut_function(hcoor,tau_wall,offset,density=1.25,kinematic_viscosity=1.44e-5):
 	Ut = hcoor*tau_wall/kinematic_viscosity/density+offset
 	return Ut
 
+def Re_stress_from_spline(hcoor,uv):
+	uv_spline = CubicSpline(hcoor,uv)
+	duv_spline = uv_spline.derivative()
+	spline_roots = duv_spline.roots()
+	uv_max = np.max(abs(uv_spline(spline_roots)))
+	return uv_max
+
 # ------------------
 # Reading the files
 # ------------------
@@ -39,8 +46,9 @@ mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
 bl_save_path = temporal.project_path + 'boundary_layer_profile/'
 
-wall_shear_method = 'smoothed_derivative' #smoothed_derivative or spline or shear_fit or legacy_spline
-
+wall_shear_method = temporal.wall_shear_method #smoothed_derivative or spline or shear_fit or legacy_spline
+update_bl_var = temporal.update_bl_var # list of strings for declaring variables to be updated
+update_surface_var = temporal.update_surface_var
 nb_points = temporal.nb_points #number of points across the boundary layer
 var_list = ['U_n','U_t','static_pressure','mag_velocity_rel'] #variable used for the cross correlation contour
 timestep_size = temporal.timestep_size
@@ -201,7 +209,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	dudy_interp = np.interp(hcoor,hcoor[:-1]+np.diff(hcoor)/2,dudy)
 
 	idx_delta_95,delta_95[istreamwise] = extract_BL_params.get_delta95(hcoor,total_pressure)
-	uv_max[istreamwise] = np.max(abs(density*data_dict['uv_mean'][:,istreamwise]))
+	uv_max[istreamwise] = density*Re_stress_from_spline(hcoor,data_dict['uv_mean'][:,istreamwise])
 	Ue[istreamwise] = U_t[idx_delta_95]
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
@@ -232,14 +240,11 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		plt.xscale('log')
 		plt.legend()
 		plt.savefig(bl_save_path + 'FIG/log_law_check_{}.jpg'.format(istreamwise))
-	
-	#tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,npts_interp=50000,maximum_stress=False)
-	#tau_wall[istreamwise] = U_t[1]/hcoor[1]*kinematic_viscosity*density
+
 	edge_pressure[istreamwise] = data_dict['static_pressure_mean'][idx_delta_95,istreamwise]
 
 	u_tau = np.sqrt(tau_wall[istreamwise]/density)
 	cf[istreamwise] = tau_wall[istreamwise]/q
-	#RT[istreamwise] = u_tau*delta_95[istreamwise]/kinematic_viscosity*np.sqrt(cf[istreamwise]/2)
 	RT[istreamwise] = (delta_95[istreamwise]/Ue[istreamwise])/(kinematic_viscosity/u_tau**2)
 
 	#Obtain the parameters for Pargal model
@@ -257,16 +262,23 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		y_idx = np.where(abs(D) < 10.0)[0][-1]
 		y_w[istreamwise] = y_plus[y_idx]
 
-	bl_data = pd.DataFrame({
-		'h' : hcoor,
-		'U_t' : U_t,
-		'mag_velocity_rel_mean' : mag_velocity_rel,
-		'dudy' : dudy_interp,
-		'uu_mean' : data_dict['uu_mean'][:,istreamwise],
-		'vv_mean' : data_dict['vv_mean'][:,istreamwise],
-		'uv_mean' : data_dict['uv_mean'][:,istreamwise]
-	})
-	bl_data.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)))
+	if len(update_bl_var) == 0:
+		bl_data = pd.DataFrame({
+			'h' : hcoor,
+			'U_t' : U_t,
+			'mag_velocity_rel_mean' : mag_velocity_rel,
+			'dudy' : dudy_interp,
+			'uu_mean' : data_dict['uu_mean'][:,istreamwise],
+			'vv_mean' : data_dict['vv_mean'][:,istreamwise],
+			'uv_mean' : data_dict['uv_mean'][:,istreamwise]
+		})
+		bl_data.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)))
+	else:
+		for var in update_bl_var:
+			bl_data = pd.read_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)))
+			hcoor_loaded = bl_data['h']
+			var_spline = CubicSpline(hcoor,data_dict[var][:,istreamwise]) # resample the data to fit existing dataframe
+			bl_data[var] = var_spline(hcoor_loaded)
 
 print('Computing pressure gradient...')
 smoothed_static_pressure = savgol_filter(edge_pressure[:-1], window_length=11, polyorder=2)
@@ -275,24 +287,16 @@ dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-1])
 dpds_interp = np.interp(scoor,scoor[:-2],dpds)
 data_dict['dpds'] = dpds_interp
 
-## Smooth derivative
-#from scipy import ndimage
-#dP=ndimage.gaussian_filter1d(edge_pressure[:-1],sigma=10, order=1, mode='nearest')
-#ds=np.diff(scoor)
-#dpds = dP/ds
-#dpds_interp = np.interp(scoor,scoor[:-1],dpds)
-#data_dict['dpds'] = dpds_interp
-
 beta_c = delta_theta/tau_wall*data_dict['dpds']
 
 # Save boundary layer info
 surface_data = pd.DataFrame({
 	'streamwise location' : xcoor + chord,
-    'delta_95': delta_95,
-    'delta_theta': delta_theta,
-    'delta_star': delta_star,
-    'beta_c': beta_c,
-    'RT': RT,
+	'delta_95': delta_95,
+	'delta_theta': delta_theta,
+	'delta_star': delta_star,
+	'beta_c': beta_c,
+	'RT': RT,
 	'dpds' : data_dict['dpds'],
 	'cf' : cf,
 	'tau_wall' : tau_wall,
@@ -306,4 +310,11 @@ smooth_var_list = ['beta_c','dpds','cf','tau_wall','Ue','uv_max']
 for smooth_var in smooth_var_list:
 	surface_data[smooth_var][:-1] = savgol_filter(surface_data[smooth_var][:-1], 11, 2)
 
-surface_data.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
+# Save the surface data result. If update option chosen, open existing surface data file and save desired variable.
+if len(update_surface_var) == 0:
+	surface_data.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
+else:
+	for var in update_surface_var:
+		surface_data = pd.read_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
+		surface_data[var] = surface_data[var]
+		surface_data.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
