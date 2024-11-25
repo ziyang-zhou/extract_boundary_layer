@@ -192,10 +192,6 @@ delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall, edge_pr
 print('Computing parameter of the boundary layer...')
 
 for istreamwise,streamwise_coor in enumerate(scoor):
-	# extrapolate to obtain the wall value
-	data_dict['Ut_mean'][:,istreamwise][0] = 0.0
-	data_dict['mag_velocity_rel_mean'][:,istreamwise][0] = 0.0
-
 	U_t = data_dict['Ut_mean'][:,istreamwise]
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
 	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
@@ -222,7 +218,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	elif wall_shear_method == 'smoothed_derivative':
 		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=100,maximum_stress=False)
 	elif wall_shear_method == 'shear_fit':
-		params, _ = curve_fit(Ut_function, hcoor[1:8], U_t[1:8], p0=[1.0,0.3])
+		params, _ = curve_fit(Ut_function, hcoor[1:5], U_t[1:5], p0=[1.0,0.3])
 		tau_wall[istreamwise] = params[0]
 
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
