@@ -24,12 +24,13 @@ def Ut_function(hcoor,tau_wall,offset,density=1.25,kinematic_viscosity=1.44e-5):
 	Ut = hcoor*tau_wall/kinematic_viscosity/density+offset
 	return Ut
 
-def Re_stress_from_spline(hcoor,uv):
-	uv_spline = CubicSpline(hcoor,uv)
-	duv_spline = uv_spline.derivative()
-	spline_roots = duv_spline.roots()
-	uv_max = np.max(abs(uv_spline(spline_roots)))
-	return uv_max
+def Re_stress_from_spline(hcoor,uv,nbpts=3000):
+        uv_spline = CubicSpline(hcoor,uv)
+        x_space = np.linspace(0,hcoor[-1],nbpts)
+        uv_interp = abs(uv_spline(x_space))
+        uv_max = np.max(uv_interp)
+        return uv_max
+
 
 # ------------------
 # Reading the files
@@ -231,7 +232,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
-	if istreamwise%10 == 0:
+	if istreamwise%20 == 0:
 		plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
 		plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000)+U_t[0]/u_tau_aux,label='y+ = u+')
 		plt.xlabel('y+')
@@ -240,6 +241,16 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		plt.xscale('log')
 		plt.legend()
 		plt.savefig(bl_save_path + 'FIG/log_law_check_{}.jpg'.format(istreamwise))
+		plt.close()
+
+		plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,uv_max[istreamwise]/tau_wall[istreamwise])
+		plt.xlabel('y+')
+		plt.ylabel('U+')
+		plt.xlim([0.0,200])
+		plt.ylim([-4.0,0.0])
+		plt.legend()
+		plt.savefig(bl_save_path + 'FIG/uv_check_{}.jpg'.format(istreamwise))
+		plt.close()
 
 	edge_pressure[istreamwise] = data_dict['static_pressure_mean'][idx_delta_95,istreamwise]
 
@@ -279,6 +290,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 			hcoor_loaded = bl_data_loaded['h']
 			var_spline = CubicSpline(hcoor,data_dict[var][:,istreamwise]) # resample the data to fit existing dataframe
 			bl_data_loaded[var] = var_spline(hcoor_loaded)
+			bl_data_loaded.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)))
 
 print('Computing pressure gradient...')
 smoothed_static_pressure = savgol_filter(edge_pressure[:-1], window_length=11, polyorder=2)

@@ -197,12 +197,16 @@ def get_velocity_corr(signal_1,signal_2):
         return cross_corr
 
 def get_velocity_cov(u,v):
+        u = u - np.mean(u)
+        v = v - np.mean(v)
+        u_rms = np.std(u)
+        v_rms = np.std(v)
         #takes in two signals and outputs the cross-correlation
         uv_stack = np.stack((u, v), axis=0)
         corr_matrix = np.cov(uv_stack,bias=True)
-        uv = corr_matrix[0,1]
-        uu = corr_matrix[0,0]
-        vv = corr_matrix[1,1]
+        uv = corr_matrix[0,1]*u_rms*v_rms
+        uu = corr_matrix[0,0]*u_rms**2
+        vv = corr_matrix[1,1]*v_rms**2
         return uu,vv,uv
 
 ###############################################PROCESSING CONTOUR DATA#################################################################
