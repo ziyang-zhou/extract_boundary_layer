@@ -156,7 +156,6 @@ for var in var_list:
 								n+=1
 							data_dict[var][i,ki] = (data_dict[var][i-1,ki] + data_dict[var][i+n,ki])/2			
 
-
 # ------------------------------
 # Parameter calculation
 # ------------------------------
@@ -245,7 +244,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 
 		plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,data_dict['uv_mean'][:,istreamwise]/tau_wall[istreamwise])
 		plt.xlabel('y+')
-		plt.ylabel('U+')
+		plt.ylabel('uv+')
 		plt.xlim([0.0,200])
 		plt.ylim([-4.0,0.0])
 		plt.savefig(bl_save_path + 'FIG/uv_check_{}.jpg'.format(istreamwise))
@@ -282,14 +281,14 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 			'vv_mean' : data_dict['vv_mean'][:,istreamwise],
 			'uv_mean' : data_dict['uv_mean'][:,istreamwise]
 		})
-		bl_data.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)))
+		bl_data.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)), index=False)
 	else:
 		for var in update_bl_var:
 			bl_data_loaded = pd.read_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)))
 			hcoor_loaded = bl_data_loaded['h']
 			var_spline = CubicSpline(hcoor,data_dict[var][:,istreamwise]) # resample the data to fit existing dataframe
 			bl_data_loaded[var] = var_spline(hcoor_loaded)
-			bl_data_loaded.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)))
+			bl_data_loaded.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)), index=False)
 
 print('Computing pressure gradient...')
 smoothed_static_pressure = savgol_filter(edge_pressure[:-1], window_length=11, polyorder=2)
@@ -323,9 +322,9 @@ for smooth_var in smooth_var_list:
 
 # Save the surface data result. If update option chosen, open existing surface data file and save desired variable.
 if len(update_surface_var) == 0:
-	surface_data.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
+	surface_data.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name), index=False)
 else:
 	for var in update_surface_var:
 		surface_data_loaded = pd.read_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
 		surface_data_loaded[var] = surface_data[var]
-		surface_data_loaded.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
+		surface_data_loaded.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name), index=False)
