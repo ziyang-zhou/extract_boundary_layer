@@ -91,8 +91,8 @@ sprof[1:] = np.cumsum(ds)
 scoor = sprof
 hcoor = np.linspace(0,temporal.length_extraction,nb_points)
 
-if os.path.isfile(bl_save_path + 'data_dict.pkl'):
-	with open(bl_save_path + 'data_dict.pkl', 'rb') as f:
+if os.path.isfile(bl_read_path + 'data_dict.pkl'):
+	with open(bl_read_path + 'data_dict.pkl', 'rb') as f:
 		data_dict = pickle.load(f)
 else:
 	#Load the boundary layer data
@@ -125,7 +125,7 @@ else:
 				print('data shape is {}'.format(np.shape(data_dict[var])))
 				print('chunk {} read'.format(j))
 	# Save the boundary layer data
-	with open(bl_save_path + 'data_dict.pkl', 'wb') as f:
+	with open(bl_read_path + 'data_dict.pkl', 'wb') as f:
 		pickle.dump(data_dict, f)
 
 for var in var_list:
@@ -243,12 +243,11 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		plt.savefig(bl_save_path + 'FIG/log_law_check_{}.jpg'.format(istreamwise))
 		plt.close()
 
-		plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,uv_max[istreamwise]/tau_wall[istreamwise])
+		plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,data_dict['uv_mean'][:,istreamwise]/tau_wall[istreamwise])
 		plt.xlabel('y+')
 		plt.ylabel('U+')
 		plt.xlim([0.0,200])
 		plt.ylim([-4.0,0.0])
-		plt.legend()
 		plt.savefig(bl_save_path + 'FIG/uv_check_{}.jpg'.format(istreamwise))
 		plt.close()
 
