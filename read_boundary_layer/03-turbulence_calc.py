@@ -134,7 +134,7 @@ for var in var_list:
 			for ki in range(0,np.shape(data_dict[var])[2]-1):
 				for t in range(0,np.shape(data_dict[var])[0]-1):
 					i_zero = np.where(abs(data_dict[var][t,:,ki]) == 0)[0]
-					for i in i_zero[1:]:
+					for i in i_zero:
 						if i+1 not in i_zero:
 							data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+1,ki])/2
 						else:
