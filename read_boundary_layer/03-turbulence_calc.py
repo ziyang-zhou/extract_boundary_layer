@@ -39,7 +39,7 @@ mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
 bl_save_path = temporal.project_path + 'boundary_layer_profile/'
 
-wall_shear_method = 'shear_fit' #smoothed_derivative or spline or shear_fit or legacy_spline
+wall_shear_method = 'smoothed_derivative' #smoothed_derivative or spline or shear_fit or legacy_spline
 
 nb_points = temporal.nb_points #number of points across the boundary layer
 var_list = ['U_n','U_t','static_pressure','mag_velocity_rel'] #variable used for the cross correlation contour
