@@ -275,10 +275,10 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		bl_data.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)))
 	else:
 		for var in update_bl_var:
-			bl_data = pd.read_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)))
-			hcoor_loaded = bl_data['h']
+			bl_data_loaded = pd.read_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)))
+			hcoor_loaded = bl_data_loaded['h']
 			var_spline = CubicSpline(hcoor,data_dict[var][:,istreamwise]) # resample the data to fit existing dataframe
-			bl_data[var] = var_spline(hcoor_loaded)
+			bl_data_loaded[var] = var_spline(hcoor_loaded)
 
 print('Computing pressure gradient...')
 smoothed_static_pressure = savgol_filter(edge_pressure[:-1], window_length=11, polyorder=2)
@@ -315,6 +315,6 @@ if len(update_surface_var) == 0:
 	surface_data.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
 else:
 	for var in update_surface_var:
-		surface_data = pd.read_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
-		surface_data[var] = surface_data[var]
-		surface_data.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
+		surface_data_loaded = pd.read_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
+		surface_data_loaded[var] = surface_data[var]
+		surface_data_loaded.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name))
