@@ -207,25 +207,25 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
 
 	if wall_shear_method == 'spline': 	
-		tau_spl = CubicSpline(hcoor[1:], U_t[1:], bc_type = 'natural')
+		tau_spl = CubicSpline(hcoor, U_t, bc_type = 'natural')
 		dudy_wall = tau_spl.c[-2,0]
 		tau_wall[istreamwise] = dudy_wall*kinematic_viscosity*density
 	elif wall_shear_method == 'legacy_spline':
-		cs = CubicSpline(hcoor[1:],U_t[1:])
+		cs = CubicSpline(hcoor,U_t)
 		x_0 = 0
 		dudy_wall = cs(x_0, 1)
 		tau_wall[istreamwise] = dudy_wall*kinematic_viscosity*density
 	elif wall_shear_method == 'smoothed_derivative':
-		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=100,maximum_stress=False)
+		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=3000,maximum_stress=False)
 	elif wall_shear_method == 'shear_fit':
-		params, _ = curve_fit(Ut_function, hcoor[1:5], U_t[1:5], p0=[1.0,0.3])
+		params, _ = curve_fit(Ut_function, hcoor[0:6], U_t[0:6], p0=[1.0,0.3])
 		tau_wall[istreamwise] = params[0]
 
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
 	if istreamwise%10 == 0:
 		plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
-		plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000),label='y+ = u+')
+		plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000)+U_t[0]/u_tau_aux,label='y+ = u+')
 		plt.xlabel('y+')
 		plt.ylabel('U+')
 		plt.xlim([0.1,100])
