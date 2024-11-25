@@ -39,7 +39,7 @@ mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
 bl_save_path = temporal.project_path + 'boundary_layer_profile/'
 
-wall_shear_method = 'legacy_spline' #smoothed_derivative or spline or shear_fit or legacy_spline
+wall_shear_method = 'shear_fit' #smoothed_derivative or spline or shear_fit or legacy_spline
 
 nb_points = temporal.nb_points #number of points across the boundary layer
 var_list = ['U_n','U_t','static_pressure','mag_velocity_rel'] #variable used for the cross correlation contour
@@ -125,7 +125,7 @@ for var in var_list:
 			for ki in range(0,np.shape(data_dict[var])[2]-1):
 				for t in range(0,np.shape(data_dict[var])[0]-1):
 					i_zero = np.where(abs(data_dict[var][t,:,ki]) == 0)[0]
-					for i in i_zero:
+					for i in i_zero[1:]:
 						if i+1 not in i_zero:
 							data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+1,ki])/2
 						else:

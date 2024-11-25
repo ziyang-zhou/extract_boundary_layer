@@ -333,9 +333,9 @@ def extract_BL_profiles(b_vol,BL_line_geom,length_extraction,var_detection,nb_po
       for iv,var in enumerate(var_list):
         BL_line_prof[zn][it][var]=data_BL[:,:,iv,it]
 
-      # Correct wall value
-      BL_line_prof[zn][it]['U_t'][:,0]=0.
-      BL_line_prof[zn][it]['mag_velocity_rel'][:,0]=0.
+      # Do not correct wall value
+      #BL_line_prof[zn][it]['U_t'][:,0]=0.
+      #BL_line_prof[zn][it]['mag_velocity_rel'][:,0]=0.
 
   return BL_line_prof,successful_extraction
 
