@@ -199,8 +199,8 @@ def get_velocity_corr(signal_1,signal_2):
 def get_velocity_cov(u,v,fs):
         u = u - np.mean(u)
         v = v - np.mean(v)
-        u = butter_bandpass_filter(u, 100, 20000, fs, order=2)
-        v = butter_bandpass_filter(v, 100, 20000, fs, order=2)
+        u = butter_bandpass_filter(u, 100, 8000, fs, order=2)
+        v = butter_bandpass_filter(v, 100, 8000, fs, order=2)
         #takes in two signals and outputs the cross-correlation
         uv = (np.dot(u,v))/len(u)
         uu = (np.dot(u,u))/len(u)
