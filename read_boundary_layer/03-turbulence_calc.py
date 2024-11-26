@@ -120,7 +120,7 @@ else:
 					data_dict[var] = data_append
 				elif (n + j == 1) & (step_per_chunk == 1):
 					data_dict[var] = np.concatenate((data_dict[var][np.newaxis,:,:], data_append[np.newaxis,:,:]), axis=0)
-				elif (n == 1 & j == 0) & (step_per_chunk > 1):
+				elif (n == 1 and j == 0) and (step_per_chunk > 1):
 					data_dict[var] = np.concatenate((data_dict[var][np.newaxis,:,:], data_append[np.newaxis,:,:]), axis=0)
 				else:
 					data_dict[var] = np.concatenate((data_dict[var], data_append[np.newaxis,:,:]), axis=0)
@@ -233,8 +233,8 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
 	#Obtain the parameters for Pargal model
-	y_plus = hcoor*u_tau/kinematic_viscosity
-	u_plus = U_t/u_tau
+	y_plus = hcoor*u_tau_aux/kinematic_viscosity
+	u_plus = U_t/u_tau_aux
 	if istreamwise > len(scoor)//2: #APG
 		kappa = 0.3
 		B = -1.38
