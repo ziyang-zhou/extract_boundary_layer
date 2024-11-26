@@ -200,7 +200,6 @@ def get_velocity_cov(u,v):
         u = u - np.mean(u)
         v = v - np.mean(v)
         #takes in two signals and outputs the cross-correlation
-
         uv = (np.dot(u,v))/len(u)
         uu = (np.dot(u,u))/len(u)
         vv = (np.dot(v,v))/len(u)
