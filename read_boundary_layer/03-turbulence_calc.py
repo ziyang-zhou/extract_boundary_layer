@@ -61,6 +61,7 @@ step_per_chunk = temporal.step_per_chunk
 total_timesteps = temporal.total_timesteps
 starting_timestep = temporal.starting_timestep
 num_chunks = (total_timesteps - starting_timestep) // step_per_chunk
+fs = 1/temporal.timestep_size
 
 os.makedirs(bl_save_path, exist_ok=True)
 os.makedirs(bl_save_path + 'FIG/', exist_ok=True)
@@ -193,7 +194,7 @@ for istreamwise in range(0,np.shape(data_dict['uv_mean'])[1]):                  
 	for iwallnormal in range(0,np.shape(data_dict['uv_mean'])[0]):                                       #wall normal index_point
 		U_n = data_dict['Un_fluc'][:,iwallnormal,istreamwise]
 		U_t = data_dict['Ut_fluc'][:,iwallnormal,istreamwise]
-		data_dict['uu_mean'][iwallnormal,istreamwise],data_dict['vv_mean'][iwallnormal,istreamwise],data_dict['uv_mean'][iwallnormal,istreamwise], = analysis.get_velocity_cov(U_t,U_n)
+		data_dict['uu_mean'][iwallnormal,istreamwise],data_dict['vv_mean'][iwallnormal,istreamwise],data_dict['uv_mean'][iwallnormal,istreamwise], = analysis.get_velocity_cov(U_t,U_n,fs)
 
 # Compute delta_95, momentum thickness and displacement thickness
 delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall, edge_pressure, y_w, p_rms = tuple(np.zeros(len(scoor)) for _ in range(12))
