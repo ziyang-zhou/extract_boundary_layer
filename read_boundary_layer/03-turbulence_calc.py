@@ -118,7 +118,9 @@ else:
 				print('n {} j {}'.format(n,j))
 				if (n + j == 0):
 					data_dict[var] = data_append
-				elif (n + j == 1):
+				elif (n + j == 1) & (step_per_chunk == 1):
+					data_dict[var] = np.concatenate((data_dict[var][np.newaxis,:,:], data_append[np.newaxis,:,:]), axis=0)
+				elif (n == 1 & j == 0) & (step_per_chunk > 1):
 					data_dict[var] = np.concatenate((data_dict[var][np.newaxis,:,:], data_append[np.newaxis,:,:]), axis=0)
 				else:
 					data_dict[var] = np.concatenate((data_dict[var], data_append[np.newaxis,:,:]), axis=0)
@@ -230,6 +232,20 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
+	#Obtain the parameters for Pargal model
+	y_plus = hcoor*u_tau/kinematic_viscosity
+	u_plus = U_t/u_tau
+	if istreamwise > len(scoor)//2: #APG
+		kappa = 0.3
+		B = -1.38
+	else: #ZPG
+		kappa = 0.41
+		B = 4.5
+	D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
+	if not np.any(np.isnan(D)) and not np.any(np.isinf(D)):
+		y_idx = np.where(abs(D) < 10.0)[0][-1]
+		y_w[istreamwise] = y_plus[y_idx]
+
 	if istreamwise%20 == 0:
 		if len(update_bl_var) == 0:
 			plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
@@ -255,21 +271,6 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	u_tau = np.sqrt(tau_wall[istreamwise]/density)
 	cf[istreamwise] = tau_wall[istreamwise]/q
 	RT[istreamwise] = (delta_95[istreamwise]/Ue[istreamwise])/(kinematic_viscosity/u_tau**2)
-
-	#Obtain the parameters for Pargal model
-	y_plus = hcoor*u_tau/kinematic_viscosity
-	u_plus = U_t/u_tau
-	if istreamwise > len(scoor)//2: #APG
-		kappa = 0.3
-		B = -1.38
-	else: #ZPG
-		kappa = 0.41
-		B = 4.5
-	D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
-
-	if not np.any(np.isnan(D)) and not np.any(np.isinf(D)):
-		y_idx = np.where(abs(D) < 10.0)[0][-1]
-		y_w[istreamwise] = y_plus[y_idx]
 
 	if len(update_bl_var) == 0:
 		bl_data = pd.DataFrame({
