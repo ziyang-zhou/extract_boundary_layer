@@ -24,7 +24,7 @@ def Ut_function(hcoor,tau_wall,offset,density=1.25,kinematic_viscosity=1.44e-5):
 	Ut = hcoor*tau_wall/kinematic_viscosity/density+offset
 	return Ut
 
-def Re_stress_from_spline(hcoor,uv,nbpts=3000):
+def Re_stress_from_spline(hcoor,uv,nbpts=30000):
         uv_spline = CubicSpline(hcoor,uv)
         x_space = np.linspace(0,hcoor[-1],nbpts)
         uv_interp = abs(uv_spline(x_space))
@@ -196,7 +196,6 @@ for istreamwise in range(0,np.shape(data_dict['uv_mean'])[1]):                  
 # Compute delta_95, momentum thickness and displacement thickness
 delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall, edge_pressure, y_w, p_rms = tuple(np.zeros(len(scoor)) for _ in range(12))
 
-
 print('Computing parameter of the boundary layer...')
 
 for istreamwise,streamwise_coor in enumerate(scoor):
@@ -232,20 +231,21 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
 	if istreamwise%20 == 0:
-		plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
-		plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000)+U_t[0]/u_tau_aux,label='y+ = u+')
-		plt.xlabel('y+')
-		plt.ylabel('U+')
-		plt.xlim([0.1,100])
-		plt.xscale('log')
-		plt.legend()
-		plt.savefig(bl_save_path + 'FIG/log_law_check_{}.jpg'.format(istreamwise))
-		plt.close()
+		if len(update_bl_var) == 0:
+			plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
+			plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000)+U_t[0]/u_tau_aux,label='y+ = u+')
+			plt.xlabel('y+')
+			plt.ylabel('U+')
+			plt.xlim([0.1,100])
+			plt.xscale('log')
+			plt.legend()
+			plt.savefig(bl_save_path + 'FIG/log_law_check_{}.jpg'.format(istreamwise))
+			plt.close()
 
-		plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,data_dict['uv_mean'][:,istreamwise]/tau_wall[istreamwise])
+		plt.scatter(hcoor[:20],data_dict['uv_mean'][:20,istreamwise])
 		plt.xlabel('y+')
-		plt.ylabel('uv+')
-		plt.xlim([0.0,200])
+		plt.ylabel('uv')
+		plt.xlim([0.0,0.0003])
 		plt.ylim([-4.0,0.0])
 		plt.savefig(bl_save_path + 'FIG/uv_check_{}.jpg'.format(istreamwise))
 		plt.close()
