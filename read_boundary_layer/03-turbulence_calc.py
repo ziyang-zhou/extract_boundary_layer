@@ -206,9 +206,8 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
 	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
 	total_pressure = total_pressure - total_pressure[0]
-	dudy = np.zeros(np.size(mag_velocity_rel)-1)
-	dudy = np.diff(U_t)/np.diff(hcoor)
-	dudy_interp = np.interp(hcoor,hcoor[:-1]+np.diff(hcoor)/2,dudy)
+	U_cs = CubicSpline(hcoor,U_t)
+	dudy_interp = U_cs(hcoor, 1)
 
 	idx_delta_95,delta_95[istreamwise] = extract_BL_params.get_delta95(hcoor,total_pressure)
 	uv_max[istreamwise] = Re_stress_from_spline(hcoor,data_dict['uv_mean'][:,istreamwise])
