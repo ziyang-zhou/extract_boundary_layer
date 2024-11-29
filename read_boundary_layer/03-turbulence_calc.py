@@ -5,6 +5,7 @@ from functions import analysis, extract_BL_params
 from scipy.interpolate import CubicSpline, interp1d
 from scipy.optimize import curve_fit
 from scipy.signal import savgol_filter
+from scipy import ndimage
 import vtk
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,13 +25,22 @@ def Ut_function(hcoor,tau_wall,offset,density=1.25,kinematic_viscosity=1.44e-5):
 	Ut = hcoor*tau_wall/kinematic_viscosity/density+offset
 	return Ut
 
-def Re_stress_from_spline(hcoor,uv,nbpts=30000):
-        uv_spline = CubicSpline(hcoor,uv)
-        x_space = np.linspace(0,hcoor[-1],nbpts)
-        uv_interp = abs(uv_spline(x_space))
-        uv_max = np.max(uv_interp)
-        return uv_max
+def log_region_finder(y_plus,Ut_plus):
+	Ut_plus_smooth = savgol_filter(Ut_plus, 5, 2)
+	Ut_plus_derivative = np.gradient(Ut_plus_smooth, y_plus)
+	mask = (y_plus > 20) & (Ut_plus_derivative < 1.5)
+	return y_plus[mask],Ut_plus[mask]
 
+def log_law_fit(y_plus,kappa,B,wall_shear,kinematic_viscosity=1.44e-5,density=1.251):
+	Ut_plus = 1/kappa*np.log(y_plus)+B
+	return Ut_plus
+
+def Re_stress_from_spline(hcoor,uv,nbpts=30000):
+	uv_spline = CubicSpline(hcoor,uv)
+	x_space = np.linspace(0,hcoor[-1],nbpts)
+	uv_interp = abs(uv_spline(x_space))
+	uv_max = np.max(uv_interp)
+	return uv_max
 
 # ------------------
 # Reading the files
@@ -45,7 +55,8 @@ chord = 0.1356
 
 mesh_read_path = temporal.mesh_path
 bl_read_path = temporal.bl_path
-bl_save_path = temporal.project_path + 'boundary_layer_profile/'
+project_path = temporal.project_path
+bl_save_path = project_path + 'boundary_layer_profile/'
 
 wall_shear_method = temporal.wall_shear_method #smoothed_derivative or spline or shear_fit or legacy_spline
 update_bl_var = temporal.update_bl_var # list of strings for declaring variables to be updated
@@ -206,8 +217,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
 	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
 	total_pressure = total_pressure - total_pressure[0]
-	U_cs = CubicSpline(hcoor,U_t)
-	dudy_interp = U_cs(hcoor, 1)
+	dudy_interp = ndimage.gaussian_filter1d(U_t,sigma=3, order=1, mode='nearest')
 
 	idx_delta_95,delta_95[istreamwise] = extract_BL_params.get_delta95(hcoor,total_pressure)
 	uv_max[istreamwise] = Re_stress_from_spline(hcoor,data_dict['uv_mean'][:,istreamwise])
@@ -229,30 +239,32 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	elif wall_shear_method == 'shear_fit':
 		params, _ = curve_fit(Ut_function, hcoor[0:6], U_t[0:6], p0=[1.0,0.3])
 		tau_wall[istreamwise] = params[0]
+		offset = params[1] 
 
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
 	#Obtain the parameters for Pargal model
 	y_plus = hcoor*u_tau_aux/kinematic_viscosity
-	u_plus = U_t/u_tau_aux
-	if istreamwise > len(scoor)//2: #APG
-		kappa = 0.3
-		B = -1.38
-	else: #ZPG
-		kappa = 0.41
-		B = 4.5
+	u_plus = (U_t-U_t[0])/u_tau_aux
+	y_plus_masked,u_plus_masked = log_region_finder(y_plus,u_plus)
+	kappa_B, _ = curve_fit(log_law_fit, y_plus_masked, u_plus_masked, p0=[0.41,5.0])
+	kappa = kappa_B[0]
+	B = kappa_B[1]
 	D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
+	print('B : {} and kappa : {}'.format(B,kappa))
 	if not np.any(np.isnan(D)) and not np.any(np.isinf(D)):
-		y_idx = np.where(abs(D) < 10.0)[0][-1]
+		y_idx = np.where(abs(D) < 1.0)[0][-1]
 		y_w[istreamwise] = y_plus[y_idx]
 
 	if istreamwise%20 == 0:
-		if len(update_bl_var) == 0:
+		if 'mean_flow' in project_path:
 			plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
 			plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000)+U_t[0]/u_tau_aux,label='y+ = u+')
+			plt.plot(np.linspace(0,100,1000),1/kappa*np.log(np.linspace(0,100,1000))+B+U_t[0]/u_tau_aux,label='y+ = 1/kappa*log(y+)+B')
+			plt.axvline(x=y_plus[y_idx], color='red', linestyle='--', label=f'y+ at y_idx={y_idx}')
 			plt.xlabel('y+')
 			plt.ylabel('U+')
-			plt.xlim([0.1,100])
+			plt.xlim([0.1,1000])
 			plt.xscale('log')
 			plt.legend()
 			plt.savefig(bl_save_path + 'FIG/log_law_check_{}.jpg'.format(istreamwise))
