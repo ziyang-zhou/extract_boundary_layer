@@ -31,7 +31,7 @@ def log_region_finder(y_plus,Ut_plus):
 	mask = (y_plus > 20) & (Ut_plus_derivative < 1.5)
 	return y_plus[mask],Ut_plus[mask]
 
-def log_law_fit(y_plus,kappa,B,wall_shear,kinematic_viscosity=1.44e-5,density=1.251):
+def log_law_fit(y_plus,kappa,B):
 	Ut_plus = 1/kappa*np.log(y_plus)+B
 	return Ut_plus
 
@@ -252,9 +252,10 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	B = kappa_B[1]
 	D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
 	print('B : {} and kappa : {}'.format(B,kappa))
-	if not np.any(np.isnan(D)) and not np.any(np.isinf(D)):
-		y_idx = np.where(abs(D) < 1.0)[0][-1]
-		y_w[istreamwise] = y_plus[y_idx]
+
+	# Find the overlap region length
+	y_idx = np.where(abs(D) < 5.0)[0][-1]
+	y_w[istreamwise] = y_plus[y_idx]
 
 	if istreamwise%20 == 0:
 		if 'mean_flow' in project_path:
