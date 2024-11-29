@@ -26,6 +26,7 @@ def Ut_function(hcoor,tau_wall,offset,density=1.25,kinematic_viscosity=1.44e-5):
 	return Ut
 
 def log_region_finder(y_plus,Ut_plus,nbpts=30000):
+	# Find the lower and upper limit y_plus in the log region and mask y+ and U+ accordingly
 	y_plus_interp = np.linspace(0,500,nbpts)
 	Ut_plus = savgol_filter(Ut_plus, 11, 2)
 	Ut_plus_cs = CubicSpline(y_plus,Ut_plus)
@@ -249,7 +250,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
-	if istreamwise > 60:
+	if (istreamwise > len(scoor)//2) and (istreamwise < len(scoor)-1): # Check if current location is downstream of midchord
 		#Obtain the parameters for Pargal model
 		y_plus = hcoor*u_tau_aux/kinematic_viscosity
 		u_plus = (U_t-U_t[0])/u_tau_aux
@@ -260,30 +261,32 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
 		print('B : {} and kappa : {}'.format(B,kappa))
 		# Find the overlap region length
-		y_idx = np.where(abs(D) < 5.0)[0][-1]
+		y_idx = np.where(abs(D) < 0.1)[0][-1]
 		y_w[istreamwise] = y_plus[y_idx]
 
-	if istreamwise%20 == 0:
+	if istreamwise%10 == 0:
 		if 'mean_flow' in project_path:
+			fig = plt.figure()
 			plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
 			plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000)+U_t[0]/u_tau_aux,label='y+ = u+')
-			plt.plot(np.linspace(0,100,1000),1/kappa*np.log(np.linspace(0,100,1000))+B+U_t[0]/u_tau_aux,label='y+ = 1/kappa*log(y+)+B')
-			if y_idx is not None:
-				plt.axvline(x=y_plus[y_idx], color='red', linestyle='--', label=f'y+ at y_idx={y_idx}')
+			if 'kappa' in globals():
+				plt.plot(np.linspace(0,100,1000),1/kappa*np.log(np.linspace(0,100,1000))+B+U_t[0]/u_tau_aux,label='y+ = 1/kappa*log(y+)+B')
+				plt.axvline(x=y_plus[y_idx], color='red', linestyle='--')
 			plt.xlabel('y+')
 			plt.ylabel('U+')
 			plt.xlim([0.1,1000])
 			plt.xscale('log')
 			plt.legend()
-			plt.savefig(bl_save_path + 'FIG/log_law_check_{}.jpg'.format(istreamwise))
+			fig.savefig(bl_save_path + 'FIG/log_law_check_{}.jpg'.format(istreamwise))
 			plt.close()
 
+		fig = plt.figure()
 		plt.scatter(hcoor[:20],data_dict['uv_mean'][:20,istreamwise])
 		plt.xlabel('y+')
 		plt.ylabel('uv')
 		plt.xlim([0.0,0.0003])
 		plt.ylim([-4.0,0.0])
-		plt.savefig(bl_save_path + 'FIG/uv_check_{}.jpg'.format(istreamwise))
+		fig.savefig(bl_save_path + 'FIG/uv_check_{}.jpg'.format(istreamwise))
 		plt.close()
 
 	edge_pressure[istreamwise] = data_dict['static_pressure_mean'][idx_delta_95,istreamwise]
