@@ -28,13 +28,14 @@ def Ut_function(hcoor,tau_wall,offset,density=1.25,kinematic_viscosity=1.44e-5):
 def log_region_finder(y_plus,Ut_plus,nbpts=30000):
 	# Find the lower and upper limit y_plus in the log region and mask y+ and U+ accordingly
 	y_plus_interp = np.linspace(0,500,nbpts)
-	Ut_plus = savgol_filter(Ut_plus, 11, 2)
+	Ut_plus = savgol_filter(Ut_plus, 300, 2)
 	Ut_plus_cs = CubicSpline(y_plus,Ut_plus)
 
 	Ut_plus_derivative = Ut_plus_cs(y_plus_interp, 2)
-	Ut_plus_derivative_idx = np.where(Ut_plus_derivative < 0.01)[0][-1]
+	y_mask = y_plus_interp < 50
+	Ut_plus_derivative_idx = np.where(Ut_plus_derivative[y_mask] < 0.01)[0][-1]
 
-	mask = (y_plus > 20) & (y_plus < np.min([50,y_plus_interp[Ut_plus_derivative_idx]]))
+	mask = (y_plus > 20) & (y_plus < y_plus_interp[Ut_plus_derivative_idx])
 	print('log region y_plus',y_plus)
 	return y_plus[mask],Ut_plus[mask]
 
@@ -245,7 +246,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	elif wall_shear_method == 'smoothed_derivative':
 		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=3000,maximum_stress=False)
 	elif wall_shear_method == 'shear_fit':
-		params, _ = curve_fit(Ut_function, hcoor[0:5], U_t[0:5], p0=[1.0])
+		params, _ = curve_fit(Ut_function, hcoor[0:6], U_t[0:6], p0=[1.0,0.3])
 		tau_wall[istreamwise] = params[0]
 		offset = params[1]
 
@@ -263,16 +264,16 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		print('B : {} and kappa : {}'.format(B,kappa))
 		# Find the overlap region length
 		y_plus_masked = y_plus < 200
-		y_idx = np.where(abs(D[y_plus_masked]) < 0.1)[0][-1]
+		y_idx = np.where(abs(D[y_plus_masked]) < 0.01)[0][-1]
 		y_w[istreamwise] = y_plus[y_idx]
 
 	if istreamwise%10 == 0:
 		if 'mean_flow' in project_path:
 			fig = plt.figure()
 			plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
-			plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000)+U_t[0]/u_tau_aux,label='y+ = u+')
+			plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000)/u_tau_aux,label='y+ = u+')
 			if 'kappa' in globals():
-				plt.plot(np.linspace(0,100,1000),1/kappa*np.log(np.linspace(0,100,1000))+B+U_t[0]/u_tau_aux,label='y+ = 1/kappa*log(y+)+B')
+				plt.plot(np.linspace(0,100,1000),1/kappa*np.log(np.linspace(0,100,1000))+B,label='y+ = 1/kappa*log(y+)+B')
 				plt.axvline(x=y_plus[y_idx], color='red', linestyle='--')
 			plt.xlabel('y+')
 			plt.ylabel('U+')
