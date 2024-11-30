@@ -22,7 +22,7 @@ import pdb
 # ---------------------
 
 def Ut_function(hcoor,tau_wall,offset,density=1.25,kinematic_viscosity=1.44e-5):
-	Ut = hcoor*tau_wall/kinematic_viscosity/density
+	Ut = hcoor*tau_wall/kinematic_viscosity/density + offset
 	return Ut
 
 def log_region_finder(y_plus,Ut_plus,nbpts=30000):
@@ -32,7 +32,7 @@ def log_region_finder(y_plus,Ut_plus,nbpts=30000):
 	Ut_plus_cs = CubicSpline(y_plus,Ut_plus)
 
 	Ut_plus_derivative = Ut_plus_cs(y_plus_interp, 2)
-	Ut_plus_derivative_idx = np.where(Ut_plus_derivative < 0.1)[0][-1]
+	Ut_plus_derivative_idx = np.where(Ut_plus_derivative < 0.01)[0][-1]
 
 	mask = (y_plus > 20) & (y_plus < np.min([50,y_plus_interp[Ut_plus_derivative_idx]]))
 	print('log region y_plus',y_plus)
@@ -177,6 +177,7 @@ for var in var_list:
 								n+=1
 							data_dict[var][i,ki] = (data_dict[var][i-1,ki] + data_dict[var][i+n,ki])/2			
 
+print('shape of U_t is : {}'.format(data_dict['U_t'].shape))
 # ------------------------------
 # Parameter calculation
 # ------------------------------
@@ -244,13 +245,13 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	elif wall_shear_method == 'smoothed_derivative':
 		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=3000,maximum_stress=False)
 	elif wall_shear_method == 'shear_fit':
-		params, _ = curve_fit(Ut_function, hcoor[0:4], U_t[0:4], p0=[1.0,0.3])
+		params, _ = curve_fit(Ut_function, hcoor[0:5], U_t[0:5], p0=[1.0])
 		tau_wall[istreamwise] = params[0]
-		offset = params[1] 
+		offset = params[1]
 
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
-	if (istreamwise > len(scoor)//3) and (istreamwise < len(scoor)-1): # Check if current location is downstream of midchord
+	if (istreamwise > len(scoor)//2) and (istreamwise < len(scoor)-1): # Check if current location is downstream of midchord
 		#Obtain the parameters for Pargal model
 		y_plus = hcoor*u_tau_aux/kinematic_viscosity
 		u_plus = U_t/u_tau_aux
@@ -269,7 +270,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		if 'mean_flow' in project_path:
 			fig = plt.figure()
 			plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
-			plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000)/u_tau_aux,label='y+ = u+')
+			plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000)+U_t[0]/u_tau_aux,label='y+ = u+')
 			if 'kappa' in globals():
 				plt.plot(np.linspace(0,100,1000),1/kappa*np.log(np.linspace(0,100,1000))+B+U_t[0]/u_tau_aux,label='y+ = 1/kappa*log(y+)+B')
 				plt.axvline(x=y_plus[y_idx], color='red', linestyle='--')
