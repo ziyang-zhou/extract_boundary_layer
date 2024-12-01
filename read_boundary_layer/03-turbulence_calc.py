@@ -21,14 +21,14 @@ import pdb
 # Defined functions
 # ---------------------
 
-def Ut_function(hcoor,tau_wall,offset,density=1.25,kinematic_viscosity=1.44e-5):
-	Ut = hcoor*tau_wall/kinematic_viscosity/density + offset
+def Ut_function(hcoor,tau_wall,density=1.25,kinematic_viscosity=1.44e-5):
+	Ut = hcoor*tau_wall/kinematic_viscosity/density
 	return Ut
 
 def log_region_finder(y_plus,Ut_plus,nbpts=30000):
 	# Find the lower and upper limit y_plus in the log region and mask y+ and U+ accordingly
 	y_plus_interp = np.linspace(0,500,nbpts)
-	Ut_plus = savgol_filter(Ut_plus, 300, 2)
+	Ut_plus = savgol_filter(Ut_plus, 301, 2)
 	Ut_plus_cs = CubicSpline(y_plus,Ut_plus)
 
 	Ut_plus_derivative = Ut_plus_cs(y_plus_interp, 2)
@@ -246,13 +246,12 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	elif wall_shear_method == 'smoothed_derivative':
 		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=3000,maximum_stress=False)
 	elif wall_shear_method == 'shear_fit':
-		params, _ = curve_fit(Ut_function, hcoor[0:6], U_t[0:6], p0=[1.0,0.3])
+		params, _ = curve_fit(Ut_function, hcoor[0:6], U_t[0:6] - U_t[0], p0=[1.0]) #main idea is to find 
 		tau_wall[istreamwise] = params[0]
-		offset = params[1]
 
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
-	if (istreamwise > len(scoor)//2) and (istreamwise < len(scoor)-1): # Check if current location is downstream of midchord
+	if (istreamwise > len(scoor)//1.3) and (istreamwise < len(scoor)-1): # Check if current location is downstream of midchord
 		#Obtain the parameters for Pargal model
 		y_plus = hcoor*u_tau_aux/kinematic_viscosity
 		u_plus = U_t/u_tau_aux
@@ -264,14 +263,17 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		print('B : {} and kappa : {}'.format(B,kappa))
 		# Find the overlap region length
 		y_plus_masked = y_plus < 200
-		y_idx = np.where(abs(D[y_plus_masked]) < 0.01)[0][-1]
+		if len(np.where(abs(D[y_plus_masked]) < 0.1)[0]) > 0:
+			y_idx = np.where(abs(D[y_plus_masked]) < 0.1)[0][-1]
+		else:
+			y_idx = 0
 		y_w[istreamwise] = y_plus[y_idx]
 
 	if istreamwise%10 == 0:
 		if 'mean_flow' in project_path:
 			fig = plt.figure()
 			plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
-			plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000)/u_tau_aux,label='y+ = u+')
+			plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000) + U_t[0]/u_tau_aux,label='y+ = u+')
 			if 'kappa' in globals():
 				plt.plot(np.linspace(0,100,1000),1/kappa*np.log(np.linspace(0,100,1000))+B,label='y+ = 1/kappa*log(y+)+B')
 				plt.axvline(x=y_plus[y_idx], color='red', linestyle='--')
