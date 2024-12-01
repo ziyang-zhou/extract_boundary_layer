@@ -21,8 +21,8 @@ import pdb
 # Defined functions
 # ---------------------
 
-def Ut_function(hcoor,tau_wall,density=1.25,kinematic_viscosity=1.44e-5):
-	Ut = hcoor*tau_wall/kinematic_viscosity/density
+def Ut_function(hcoor,tau_wall,offset,density=1.25,kinematic_viscosity=1.44e-5):
+	Ut = hcoor*tau_wall/kinematic_viscosity/density+offset
 	return Ut
 
 def log_region_finder(y_plus,Ut_plus,nbpts=30000):
@@ -33,7 +33,7 @@ def log_region_finder(y_plus,Ut_plus,nbpts=30000):
 
 	Ut_plus_derivative = Ut_plus_cs(y_plus_interp, 2)
 	y_mask = y_plus_interp < 50
-	Ut_plus_derivative_idx = np.where(Ut_plus_derivative[y_mask] < 0.01)[0][-1]
+	Ut_plus_derivative_idx = np.where(Ut_plus_derivative[y_mask] < 0.001)[0][-1]
 
 	mask = (y_plus > 20) & (y_plus < y_plus_interp[Ut_plus_derivative_idx])
 	print('log region y_plus',y_plus)
@@ -246,9 +246,11 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	elif wall_shear_method == 'smoothed_derivative':
 		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=3000,maximum_stress=False)
 	elif wall_shear_method == 'shear_fit':
-		params, _ = curve_fit(Ut_function, hcoor[0:6], U_t[0:6] - U_t[0], p0=[1.0]) #main idea is to find 
+		params, _ = curve_fit(Ut_function, hcoor[0:6], U_t[0:6], p0=[1.0,0.3]) #main idea is to find 
 		tau_wall[istreamwise] = params[0]
-
+		print('offset is ',params[1])
+		print('first velocity is ',U_t[0])
+	
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
 	if (istreamwise > len(scoor)//1.3) and (istreamwise < len(scoor)-1): # Check if current location is downstream of midchord
