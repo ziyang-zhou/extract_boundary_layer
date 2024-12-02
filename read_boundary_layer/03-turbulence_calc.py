@@ -228,7 +228,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	total_pressure = total_pressure - total_pressure[0]
 
 	#Smooth Ut and find the dudy
-	Ut_smoothed = savgol_filter(U_t, 15, 2)
+	Ut_smoothed = savgol_filter(U_t, 151, 2)
 	Ut_cs = CubicSpline(hcoor,Ut_smoothed)
 	dudy_interp = Ut_cs(hcoor,1)
 
