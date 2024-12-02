@@ -35,7 +35,7 @@ def log_region_finder(y_plus,Ut_plus,nbpts=30000):
 	y_mask = y_plus_interp < 50
 	Ut_plus_derivative_idx = np.where(Ut_plus_derivative[y_mask] < 0.001)[0][-1]
 
-	mask = (y_plus > 20) & (y_plus < y_plus_interp[Ut_plus_derivative_idx])
+	mask = (y_plus > 10) & (y_plus < y_plus_interp[Ut_plus_derivative_idx])
 	print('log region y_plus',y_plus)
 	return y_plus[mask],Ut_plus[mask]
 
@@ -228,6 +228,11 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	total_pressure = total_pressure - total_pressure[0]
 	dudy_interp = ndimage.gaussian_filter1d(U_t,sigma=3, order=1, mode='nearest')
 
+	#Smooth Ut and find the dudy
+	Ut_smoothed = savgol_filter(U_t, 21, 2)
+	Ut_cs = CubicSpline(hcoor,Ut_smoothed)
+	dudy_interp = Ut_cs(hcoor,1)
+
 	idx_delta_95,delta_95[istreamwise] = extract_BL_params.get_delta95(hcoor,total_pressure)
 	uv_max[istreamwise] = Re_stress_from_spline(hcoor,data_dict['uv_mean'][:,istreamwise])
 	Ue[istreamwise] = U_t[idx_delta_95]
@@ -253,7 +258,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
-	if (istreamwise > len(scoor)//1.3) and (istreamwise < len(scoor)-1): # Check if current location is downstream of midchord
+	if (istreamwise > len(scoor)//1.5) and (istreamwise < len(scoor)-1): # Check if current location is downstream of midchord
 		#Obtain the parameters for Pargal model
 		y_plus = hcoor*u_tau_aux/kinematic_viscosity
 		u_plus = U_t/u_tau_aux
@@ -265,8 +270,8 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		print('B : {} and kappa : {}'.format(B,kappa))
 		# Find the overlap region length
 		y_plus_masked = y_plus < 200
-		if len(np.where(abs(D[y_plus_masked]) < 0.1)[0]) > 0:
-			y_idx = np.where(abs(D[y_plus_masked]) < 0.1)[0][-1]
+		if len(np.where(abs(D[y_plus_masked]) < 0.005)[0]) > 0:
+			y_idx = np.where(abs(D[y_plus_masked]) < 0.005)[0][-1]
 		else:
 			y_idx = 0
 		y_w[istreamwise] = y_plus[y_idx]
