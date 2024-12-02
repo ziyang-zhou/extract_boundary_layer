@@ -226,10 +226,9 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
 	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
 	total_pressure = total_pressure - total_pressure[0]
-	dudy_interp = ndimage.gaussian_filter1d(U_t,sigma=3, order=1, mode='nearest')
 
 	#Smooth Ut and find the dudy
-	Ut_smoothed = savgol_filter(U_t, 21, 2)
+	Ut_smoothed = savgol_filter(U_t, 15, 2)
 	Ut_cs = CubicSpline(hcoor,Ut_smoothed)
 	dudy_interp = Ut_cs(hcoor,1)
 
