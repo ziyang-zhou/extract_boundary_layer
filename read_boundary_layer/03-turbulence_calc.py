@@ -66,7 +66,6 @@ bl_read_path = temporal.bl_path
 project_path = temporal.project_path
 bl_save_path = project_path + 'boundary_layer_profile/'
 
-wall_shear_method = temporal.wall_shear_method #smoothed_derivative or spline or shear_fit or legacy_spline
 update_bl_var = temporal.update_bl_var # list of strings for declaring variables to be updated
 update_surface_var = temporal.update_surface_var
 nb_points = temporal.nb_points #number of points across the boundary layer
@@ -224,22 +223,26 @@ delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall, edge_pr
 print('Computing parameter of the boundary layer...')
 
 for istreamwise,streamwise_coor in enumerate(scoor):
+	wall_shear_method = temporal.wall_shear_method 
+
 	U_t = data_dict['Ut_mean'][:,istreamwise]
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
 	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
 	total_pressure = total_pressure - total_pressure[0]
 
 	# Smooth derivative
-	dU=ndimage.gaussian_filter1d(U_t,sigma=6, order=1, mode='nearest')
+	dU=ndimage.gaussian_filter1d(U_t,sigma=11, order=1, mode='nearest')
 	dh=hcoor[1]-hcoor[0]
 	dudy_interp = dU/dh
-
 
 	idx_delta_95,delta_95[istreamwise] = extract_BL_params.get_delta95(hcoor,total_pressure)
 	uv_max[istreamwise] = Re_stress_from_spline(hcoor,data_dict['uv_mean'][:,istreamwise])
 	Ue[istreamwise] = U_t[idx_delta_95]
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
+
+	if dudy_interp < 1.0e-3: #if flow is separated, use the spline method
+		wall_shear_method = 'legacy_spline'
 
 	if wall_shear_method == 'spline': 	
 		tau_spl = CubicSpline(hcoor, U_t, bc_type = 'natural')
