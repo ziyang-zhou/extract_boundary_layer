@@ -232,6 +232,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	# Smooth derivative
 	dU=ndimage.gaussian_filter1d(U_t,sigma=6, order=1, mode='nearest')
 	dh=hcoor[1]-hcoor[0]
+	dudy_interp = dU/dh
 
 
 	idx_delta_95,delta_95[istreamwise] = extract_BL_params.get_delta95(hcoor,total_pressure)
