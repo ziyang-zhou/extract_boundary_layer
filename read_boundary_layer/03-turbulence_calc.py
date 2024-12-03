@@ -229,10 +229,10 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
 	total_pressure = total_pressure - total_pressure[0]
 
-	#Smooth Ut and find the dudy
-	Ut_smoothed = savgol_filter(U_t, 21, 2)
-	Ut_cs = CubicSpline(hcoor,Ut_smoothed)
-	dudy_interp = Ut_cs(hcoor,1)
+	# Smooth derivative
+	dU=ndimage.gaussian_filter1d(U_t,sigma=6, order=1, mode='nearest')
+	dh=hcoor[1]-hcoor[0]
+
 
 	idx_delta_95,delta_95[istreamwise] = extract_BL_params.get_delta95(hcoor,total_pressure)
 	uv_max[istreamwise] = Re_stress_from_spline(hcoor,data_dict['uv_mean'][:,istreamwise])
