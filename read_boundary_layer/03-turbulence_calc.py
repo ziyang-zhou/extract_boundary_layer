@@ -151,11 +151,13 @@ else:
 		pickle.dump(data_dict, f)
 
 for var in var_list:
+	nan_idx = np.where(np.isnan(data_dict[var])) # turns all nan into zero
+	data_dict['U_t'][nan_idx] = 0.0
 	if if_interpolate == True:
 		if data_dict[var].ndim == 3:
 			for ki in range(0,np.shape(data_dict[var])[2]-1):
 				for t in range(0,np.shape(data_dict[var])[0]-1):
-					i_zero = np.where(np.logical_or(abs(data_dict[var][t,:,ki]) == 0, np.isnan(data_dict[var][t,:,ki])))[0]
+					i_zero = np.where(data_dict[var][t,:,ki] == 0)[0]
 					for i in i_zero:
 						if i+1 not in i_zero:
 							data_dict[var][t,i,ki] = (data_dict[var][t,i-1,ki] + data_dict[var][t,i+1,ki])/2
@@ -228,7 +230,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	total_pressure = total_pressure - total_pressure[0]
 
 	#Smooth Ut and find the dudy
-	Ut_smoothed = savgol_filter(U_t, 51, 2)
+	Ut_smoothed = savgol_filter(U_t, 21, 2)
 	Ut_cs = CubicSpline(hcoor,Ut_smoothed)
 	dudy_interp = Ut_cs(hcoor,1)
 
