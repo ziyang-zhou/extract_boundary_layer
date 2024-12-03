@@ -241,8 +241,8 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
 
-	if dudy_interp < 1.0e-3: #if flow is separated, use the spline method
-		wall_shear_method = 'legacy_spline'
+	if dudy_interp[0] < 1.0e-3: #if flow is separated, use the spline method
+		wall_shear_method = 'smoothed_derivative'
 
 	if wall_shear_method == 'spline': 	
 		tau_spl = CubicSpline(hcoor, U_t, bc_type = 'natural')
