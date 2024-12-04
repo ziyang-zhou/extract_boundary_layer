@@ -219,7 +219,7 @@ for istreamwise in range(0,np.shape(data_dict['uv_mean'])[1]):                  
 		data_dict['uu_mean'][iwallnormal,istreamwise],data_dict['vv_mean'][iwallnormal,istreamwise],data_dict['uv_mean'][iwallnormal,istreamwise], = analysis.get_velocity_cov(U_t,U_n,fs)
 
 # Compute delta_95, momentum thickness and displacement thickness
-delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall, edge_pressure, y_w, p_rms = tuple(np.zeros(len(scoor)) for _ in range(12))
+delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall, edge_pressure, y_w, p_rms, cole_param = tuple(np.zeros(len(scoor)) for _ in range(13))
 
 print('Computing parameter of the boundary layer...')
 
@@ -276,9 +276,10 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		kappa = kappa_B[0]
 		B = kappa_B[1]
 		D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
+		cole_param[istreamwise] = max(D)/(2*kappa)
 		print('B : {} and kappa : {}'.format(B,kappa))
 		# Find the overlap region length
-		y_plus_mask = (y_plus > 20) & (y_plus < 90)
+		y_plus_mask = (y_plus > 20) & (y_plus < 200)
 		y_plus_masked = y_plus[y_plus_mask]
 		if len(np.where(abs(D[y_plus_mask]) < 1.0)[0]) > 0:
 			y_idx = np.where(abs(D[y_plus_mask]) < 1.0)[0][-1]
@@ -360,7 +361,8 @@ surface_data = pd.DataFrame({
 	'tau_wall' : tau_wall,
 	'Ue' : Ue,
 	'uv_max' : uv_max,
-	'y_w' : y_w
+	'y_w' : y_w,
+	'cole' : cole_param
 })
 
 # Smooth profile in streamwise direction
