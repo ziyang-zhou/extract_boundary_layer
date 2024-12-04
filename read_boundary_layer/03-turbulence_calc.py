@@ -274,13 +274,15 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		D = u_plus - U_t[0]/u_tau - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
 		print('B : {} and kappa : {}'.format(B,kappa))
 		# Find the overlap region length
-		y_plus_masked = y_plus < 200
-		if len(np.where(abs(D[y_plus_masked]) < 0.001)[0]) > 0:
-			y_idx = np.where(abs(D[y_plus_masked]) < 0.001)[0][-1]
+		y_plus_masked = y_plus < 100
+		
+		if len(np.where(abs(D[y_plus_masked]) < 0.05)[0]) > 0:
+			y_idx = np.where(abs(D[y_plus_masked]) < 0.05)[0][-1]
+			print(y_idx)
 		else:
 			y_idx = 0
 		y_w[istreamwise] = y_plus[y_idx]
-
+		print('y_w',y_w)
 	if istreamwise%10 == 0:
 		if 'mean_flow' in project_path:
 			fig = plt.figure()
