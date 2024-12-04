@@ -263,7 +263,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
-	if (istreamwise > len(scoor)//1.5) and (istreamwise < len(scoor)-1): # Check if current location is downstream of midchord
+	if (istreamwise > len(scoor)//3.0) and (istreamwise < len(scoor)-1): # Check if current location is downstream of midchord
 		#Obtain the parameters for Pargal model
 		y_plus = hcoor*u_tau_aux/kinematic_viscosity
 		u_plus = U_t/u_tau_aux
