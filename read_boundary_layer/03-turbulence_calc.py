@@ -32,11 +32,12 @@ def log_region_finder(y_plus,Ut_plus,nbpts=30000):
 	Ut_plus_cs = CubicSpline(y_plus,Ut_plus)
 
 	Ut_plus_derivative = Ut_plus_cs(y_plus_interp, 2)
-	y_mask = y_plus_interp < 50
-	Ut_plus_derivative_idx = np.where(Ut_plus_derivative[y_mask] < 0.001)[0][-1]
+	y_mask = (y_plus_interp < 80) &  (y_plus_interp > 20)
+	Ut_plus_derivative_idx = np.where(abs(Ut_plus_derivative[y_mask]) < 3.0)[0][-1]
 
-	mask = (y_plus > 10) & (y_plus < y_plus_interp[Ut_plus_derivative_idx])
-	print('log region y_plus',y_plus)
+	mask = (y_plus < y_plus_interp[Ut_plus_derivative_idx]) & (y_plus > 20)
+	mask = (y_plus < 30) & (y_plus > 20)
+	print('log region y_plus : {} to {}'.format(y_plus[mask][0],y_plus[mask][-1]))
 	return y_plus[mask],Ut_plus[mask]
 
 def log_law_fit(y_plus,kappa,B):
@@ -267,17 +268,20 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		#Obtain the parameters for Pargal model
 		y_plus = hcoor*u_tau_aux/kinematic_viscosity
 		u_plus = U_t/u_tau_aux
-		y_plus_masked,u_plus_masked = log_region_finder(y_plus,u_plus)
+		#y_plus_masked,u_plus_masked = log_region_finder(y_plus,u_plus)
+		y_mask = (y_plus < 30) & (y_plus > 20)
+		y_plus_masked = y_plus[y_mask]
+		u_plus_masked = u_plus[y_mask]
 		kappa_B, _ = curve_fit(log_law_fit, y_plus_masked, u_plus_masked, p0=[0.41,5.0])
 		kappa = kappa_B[0]
 		B = kappa_B[1]
-		D = u_plus - U_t[0]/u_tau - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
+		D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
 		print('B : {} and kappa : {}'.format(B,kappa))
 		# Find the overlap region length
-		y_plus_mask = (y_plus > 30) & (y_plus < 90)
+		y_plus_mask = (y_plus > 20) & (y_plus < 90)
 		y_plus_masked = y_plus[y_plus_mask]
-		if len(np.where(abs(D[y_plus_mask]) < 0.01)[0]) > 0:
-			y_idx = np.where(abs(D[y_plus_mask]) < 0.01)[0][-1]
+		if len(np.where(abs(D[y_plus_mask]) < 1.0)[0]) > 0:
+			y_idx = np.where(abs(D[y_plus_mask]) < 1.0)[0][-1]
 			print(y_idx)
 		else:
 			y_idx = 0
