@@ -274,14 +274,14 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		D = u_plus - U_t[0]/u_tau - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
 		print('B : {} and kappa : {}'.format(B,kappa))
 		# Find the overlap region length
-		y_plus_masked = y_plus < 100
-		
-		if len(np.where(abs(D[y_plus_masked]) < 0.05)[0]) > 0:
-			y_idx = np.where(abs(D[y_plus_masked]) < 0.05)[0][-1]
+		y_plus_mask = (y_plus > 30) & (y_plus < 90)
+		y_plus_masked = y_plus[y_plus_mask]
+		if len(np.where(abs(D[y_plus_mask]) < 0.01)[0]) > 0:
+			y_idx = np.where(abs(D[y_plus_mask]) < 0.01)[0][-1]
 			print(y_idx)
 		else:
 			y_idx = 0
-		y_w[istreamwise] = y_plus[y_idx]
+		y_w[istreamwise] = y_plus_masked[y_idx]
 		print('y_w',y_w)
 	if istreamwise%10 == 0:
 		if 'mean_flow' in project_path:
@@ -290,7 +290,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 			plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000) + U_t[0]/u_tau_aux,label='y+ = u+')
 			if 'kappa' in globals():
 				plt.plot(np.linspace(0,100,1000),1/kappa*np.log(np.linspace(0,100,1000))+B+U_t[0]/u_tau,label='y+ = 1/kappa*log(y+)+B')
-				plt.axvline(x=y_plus[y_idx], color='red', linestyle='--')
+				plt.axvline(x=y_plus_masked[y_idx], color='red', linestyle='--')
 			plt.xlabel('y+')
 			plt.ylabel('U+')
 			plt.xlim([0.1,1000])
