@@ -288,7 +288,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		y_w[istreamwise] = y_plus_masked[y_idx]
 		print('y_w',y_w)
 	if istreamwise%10 == 0:
-		if 'mean_flow' in project_path:
+		if len(update_bl_var) == 0:
 			fig = plt.figure()
 			plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
 			plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000) + U_t[0]/u_tau_aux,label='y+ = u+')
