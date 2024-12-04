@@ -271,7 +271,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		kappa_B, _ = curve_fit(log_law_fit, y_plus_masked, u_plus_masked, p0=[0.41,5.0])
 		kappa = kappa_B[0]
 		B = kappa_B[1]
-		D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
+		D = u_plus - U_t[0]/u_tau - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
 		print('B : {} and kappa : {}'.format(B,kappa))
 		# Find the overlap region length
 		y_plus_masked = y_plus < 200
