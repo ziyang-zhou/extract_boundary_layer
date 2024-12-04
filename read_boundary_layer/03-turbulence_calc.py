@@ -275,8 +275,8 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		print('B : {} and kappa : {}'.format(B,kappa))
 		# Find the overlap region length
 		y_plus_masked = y_plus < 200
-		if len(np.where(abs(D[y_plus_masked]) < 0.005)[0]) > 0:
-			y_idx = np.where(abs(D[y_plus_masked]) < 0.005)[0][-1]
+		if len(np.where(abs(D[y_plus_masked]) < 0.001)[0]) > 0:
+			y_idx = np.where(abs(D[y_plus_masked]) < 0.001)[0][-1]
 		else:
 			y_idx = 0
 		y_w[istreamwise] = y_plus[y_idx]
@@ -287,7 +287,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 			plt.scatter(hcoor[:]*u_tau_aux/kinematic_viscosity,U_t[:]/u_tau_aux,label='data')
 			plt.plot(np.linspace(0,5,1000),np.linspace(0,5,1000) + U_t[0]/u_tau_aux,label='y+ = u+')
 			if 'kappa' in globals():
-				plt.plot(np.linspace(0,100,1000),1/kappa*np.log(np.linspace(0,100,1000))+B,label='y+ = 1/kappa*log(y+)+B')
+				plt.plot(np.linspace(0,100,1000),1/kappa*np.log(np.linspace(0,100,1000))+B+U_t[0]/u_tau,label='y+ = 1/kappa*log(y+)+B')
 				plt.axvline(x=y_plus[y_idx], color='red', linestyle='--')
 			plt.xlabel('y+')
 			plt.ylabel('U+')
