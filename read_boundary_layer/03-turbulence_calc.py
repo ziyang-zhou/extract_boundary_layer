@@ -276,7 +276,10 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		kappa = kappa_B[0]
 		B = kappa_B[1]
 		D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
-		cole_param[istreamwise] = max(D)/(2*kappa)
+		if kappa > 0:
+			cole_param[istreamwise] = max(x for x in D if x != float('inf') and x != -float('inf'))/(2*kappa)
+		else:
+			cole_param[istreamwise] = 0.0
 		print('B : {} and kappa : {}'.format(B,kappa))
 		# Find the overlap region length
 		y_plus_mask = (y_plus > 20) & (y_plus < 200)
