@@ -353,7 +353,7 @@ beta_c = delta_theta/tau_wall*data_dict['dpds']
 
 # Save boundary layer info
 surface_data = pd.DataFrame({
-	'streamwise location' : xcoor + chord,
+	'streamwise_location' : xcoor + chord,
 	'delta_95': delta_95,
 	'delta_theta': delta_theta,
 	'delta_star': delta_star,
