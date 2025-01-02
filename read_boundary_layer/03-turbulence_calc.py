@@ -354,7 +354,7 @@ print('Computing acceleration parameter...')
 smoothed_edge_velocity = savgol_filter(Ue[:-1], window_length=11, polyorder=2)
 duds = np.zeros(np.size(smoothed_edge_velocity)-1)
 duds = np.diff(smoothed_edge_velocity)/np.diff(scoor[:-1])
-duds_interp = np.interp(scoor,scoor[:-2],dpds)
+duds_interp = np.interp(scoor,scoor[:-2],duds)
 K = kinematic_viscosity/Ue**2*duds_interp
 
 # Save boundary layer info
