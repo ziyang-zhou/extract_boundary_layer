@@ -34,8 +34,8 @@ troubleshoot = False # Set as true if velocity contours are to be plotted
 
 #Turbulence statistic computation
 wall_shear_method = 'shear_fit' #method of wall shear computation : smoothed_derivative or spline or shear_fit or legacy_spline
-update_bl_var = ['uu_mean','vv_mean','uv_mean'] # list of strings for declaring variables to be updated
-update_surface_var = ['uv_max']
+update_bl_var = [] # list of strings for declaring variables to be updated
+update_surface_var = []
 xcoor0 = -0.019227 # x location of the integration axis
 probe_number = 21 # probe location at which to plot the interal length
 h_0_bar = 0.2 # Dimensionless wall normal position of fixed point. Normalized by delta_95

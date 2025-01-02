@@ -348,8 +348,14 @@ dpds = np.zeros(np.size(smoothed_static_pressure)-1)
 dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-1])
 dpds_interp = np.interp(scoor,scoor[:-2],dpds)
 data_dict['dpds'] = dpds_interp
-
 beta_c = delta_theta/tau_wall*data_dict['dpds']
+
+print('Computing acceleration parameter...')
+smoothed_edge_velocity = savgol_filter(Ue[:-1], window_length=11, polyorder=2)
+duds = np.zeros(np.size(smoothed_edge_velocity)-1)
+duds = np.diff(smoothed_edge_velocity)/np.diff(scoor[:-1])
+duds_interp = np.interp(scoor,scoor[:-2],dpds)
+K = kinematic_viscosity/Ue**2*duds_interp
 
 # Save boundary layer info
 surface_data = pd.DataFrame({
@@ -358,6 +364,7 @@ surface_data = pd.DataFrame({
 	'delta_theta': delta_theta,
 	'delta_star': delta_star,
 	'beta_c': beta_c,
+	'K': K,
 	'RT': RT,
 	'dpds' : data_dict['dpds'],
 	'cf' : cf,
