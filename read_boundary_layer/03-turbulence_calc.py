@@ -261,11 +261,11 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 
 		# Reinterpolate velocity profile
 		cs = CubicSpline(hcoor,U_t)
-		hcoor = np.linspace(0,0.1,10000)
-		U_t = cs(hcoor)
+		hcoor_aux = np.linspace(0,0.1,10000)
+		U_t_aux = cs(hcoor_aux)
 
 		# Perform shear fitting
-		params, _ = curve_fit(Ut_function, hcoor[0:10], U_t[0:10], p0=[0.5,1.0])
+		params, _ = curve_fit(Ut_function, hcoor_aux[0:10], U_t_aux[0:10], p0=[0.5,1.0])
 		tau_wall[istreamwise] = params[0]
 		print('offset is ',params[1])
 		print('first velocity is ',U_t[0])
