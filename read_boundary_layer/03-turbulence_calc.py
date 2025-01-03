@@ -21,8 +21,8 @@ import pdb
 # Defined functions
 # ---------------------
 
-def Ut_function(hcoor,tau_wall,offset,density=1.25,kinematic_viscosity=1.44e-5):
-	Ut = hcoor*tau_wall/kinematic_viscosity/density+offset
+def Ut_function(hcoor,tau_wall,density=1.25,kinematic_viscosity=1.44e-5):
+	Ut = hcoor*tau_wall/kinematic_viscosity/density
 	return Ut
 
 def log_region_finder(y_plus,Ut_plus,nbpts=30000):
@@ -265,9 +265,8 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		U_t_aux = cs(hcoor_aux)
 
 		# Perform shear fitting
-		params, _ = curve_fit(Ut_function, hcoor_aux[0:10], U_t_aux[0:10], p0=[0.5,1.0])
+		params, _ = curve_fit(Ut_function, hcoor_aux[0:10], U_t_aux[0:10], p0=[0.5])
 		tau_wall[istreamwise] = params[0]
-		print('offset is ',params[1])
 		print('first velocity is ',U_t[0])
 	
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
