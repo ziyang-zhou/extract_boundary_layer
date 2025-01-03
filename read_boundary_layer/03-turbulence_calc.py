@@ -219,7 +219,7 @@ for istreamwise in range(0,np.shape(data_dict['uv_mean'])[1]):                  
 		data_dict['uu_mean'][iwallnormal,istreamwise],data_dict['vv_mean'][iwallnormal,istreamwise],data_dict['uv_mean'][iwallnormal,istreamwise], = analysis.get_velocity_cov(U_t,U_n,fs)
 
 # Compute delta_95, momentum thickness and displacement thickness
-delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall, edge_pressure, y_w, p_rms, cole_param = tuple(np.zeros(len(scoor)) for _ in range(13))
+delta_95, delta_theta, delta_star, beta_c, RT, cf, uv_max, Ue, tau_wall, edge_pressure, wall_pressure, y_w, p_rms, cole_param = tuple(np.zeros(len(scoor)) for _ in range(14))
 
 print('Computing parameter of the boundary layer...')
 
@@ -325,6 +325,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		plt.close()
 
 	edge_pressure[istreamwise] = data_dict['static_pressure_mean'][idx_delta_95,istreamwise]
+	wall_pressure[istreamwise] = data_dict['static_pressure_mean'][0,istreamwise]
 
 	u_tau = np.sqrt(tau_wall[istreamwise]/density)
 	cf[istreamwise] = tau_wall[istreamwise]/q
@@ -350,7 +351,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 			bl_data_loaded.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)), index=False)
 
 print('Computing pressure gradient...')
-smoothed_static_pressure = savgol_filter(edge_pressure[:-1], window_length=11, polyorder=2)
+smoothed_static_pressure = savgol_filter(wall_pressure[:-1], window_length=11, polyorder=2)
 dpds = np.zeros(np.size(smoothed_static_pressure)-1)
 dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-1])
 dpds_interp = np.interp(scoor,scoor[:-2],dpds)
@@ -373,6 +374,7 @@ surface_data = pd.DataFrame({
 	'beta_c': beta_c,
 	'K': K,
 	'RT': RT,
+	'wall_pressure': wall_pressure,
 	'dpds' : data_dict['dpds'],
 	'cf' : cf,
 	'tau_wall' : tau_wall,
