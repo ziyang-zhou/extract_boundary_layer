@@ -257,7 +257,15 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	elif wall_shear_method == 'smoothed_derivative':
 		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=3000,maximum_stress=False)
 	elif wall_shear_method == 'shear_fit':
-		params, _ = curve_fit(Ut_function, hcoor[0:8], U_t[0:8], p0=[0.5,1.0]) #main idea is to find 
+		U_t[0] = 0.0 # Enforce zero velocity at wall
+
+		# Reinterpolate velocity profile
+		cs = CubicSpline(hcoor,U_t)
+		hcoor = np.linspace(0,0.1,10000)
+		U_t = cs(hcoor)
+
+		# Perform shear fitting
+		params, _ = curve_fit(Ut_function, hcoor[0:10], U_t[0:10], p0=[0.5,1.0])
 		tau_wall[istreamwise] = params[0]
 		print('offset is ',params[1])
 		print('first velocity is ',U_t[0])
