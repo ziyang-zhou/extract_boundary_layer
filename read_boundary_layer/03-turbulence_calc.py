@@ -351,17 +351,15 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 			bl_data_loaded.to_csv(bl_save_path + '{}_BL_{}.csv'.format(case_name,str(istreamwise).zfill(3)), index=False)
 
 print('Computing pressure gradient...')
-smoothed_static_pressure = savgol_filter(wall_pressure[:-1], window_length=11, polyorder=2)
-dpds = np.zeros(np.size(smoothed_static_pressure)-1)
-dpds = np.diff(smoothed_static_pressure)/np.diff(scoor[:-1])
+dpds = np.zeros(np.size(wall_pressure[:-1])-1)
+dpds = np.diff(wall_pressure[:-1])/np.diff(scoor[:-1])
 dpds_interp = np.interp(scoor,scoor[:-2],dpds)
 data_dict['dpds'] = dpds_interp
 beta_c = delta_theta/tau_wall*data_dict['dpds']
 
 print('Computing acceleration parameter...')
-smoothed_edge_velocity = savgol_filter(Ue[:-1], window_length=11, polyorder=2)
-duds = np.zeros(np.size(smoothed_edge_velocity)-1)
-duds = np.diff(smoothed_edge_velocity)/np.diff(scoor[:-1])
+duds = np.zeros(np.size(Ue[:-1])-1)
+duds = np.diff(Ue[:-1])/np.diff(scoor[:-1])
 duds_interp = np.interp(scoor,scoor[:-2],duds)
 K = kinematic_viscosity/Ue**2*duds_interp
 
