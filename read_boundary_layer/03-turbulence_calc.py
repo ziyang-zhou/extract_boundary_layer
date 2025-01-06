@@ -36,7 +36,7 @@ def log_region_finder(y_plus,Ut_plus,nbpts=30000):
 	Ut_plus_derivative_idx = np.where(abs(Ut_plus_derivative[y_mask]) < 3.0)[0][-1]
 
 	mask = (y_plus < y_plus_interp[Ut_plus_derivative_idx]) & (y_plus > 20)
-	mask = (y_plus < 30) & (y_plus > 20)
+	mask = (y_plus < 1000) & (y_plus > 20)
 	print('log region y_plus : {} to {}'.format(y_plus[mask][0],y_plus[mask][-1]))
 	return y_plus[mask],Ut_plus[mask]
 
@@ -227,6 +227,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	wall_shear_method = temporal.wall_shear_method 
 
 	U_t = data_dict['Ut_mean'][:,istreamwise]
+	U_t[0] = 0.0
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
 	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
 	total_pressure = total_pressure - total_pressure[0]
@@ -242,7 +243,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	q = 0.5*density*mag_velocity_rel[idx_delta_95]**2
 	delta_star[istreamwise],delta_theta[istreamwise] = extract_BL_params.get_boundary_layer_thicknesses_from_line(hcoor,U_t,density,idx_delta_95)
 
-	if dudy_interp[0] < 1.0e-3: #if flow is separated, use the spline method
+	if dudy_interp[0] < 0: #if flow is separated, use the spline method
 		wall_shear_method = 'smoothed_derivative'
 
 	if wall_shear_method == 'spline': 	
@@ -276,10 +277,13 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		y_plus = hcoor*u_tau_aux/kinematic_viscosity
 		u_plus = U_t/u_tau_aux
 		#y_plus_masked,u_plus_masked = log_region_finder(y_plus,u_plus)
-		y_mask = (y_plus < 30) & (y_plus > 20)
+		y_mask = (y_plus < 1000) & (y_plus > 20)
 		y_plus_masked = y_plus[y_mask]
 		u_plus_masked = u_plus[y_mask]
-		kappa_B, _ = curve_fit(log_law_fit, y_plus_masked, u_plus_masked, p0=[0.41,5.0])
+		try:
+			kappa_B, _ = curve_fit(log_law_fit, y_plus_masked, u_plus_masked, p0=[0.41,5.0])
+		except:
+			pdb.set_trace()
 		kappa = kappa_B[0]
 		B = kappa_B[1]
 		D = u_plus - (1/kappa*np.log(y_plus)+B) # Compute the diagnostic function
