@@ -13,9 +13,9 @@ project_path ='../../../postprocessing/'
 save_path = '/home/ziyz1701/storage/CD_airfoil/FAN_2025/Result/'
 
 #Boundary layer extraction parameter
-length_extraction = 0.0075 #slightly higher than as the delta_95
+length_extraction = 0.01 #slightly higher than as the delta_95
 var_detection = 'U_t'
-nb_points = 350 #no. of wall normal discr points
+nb_points = 1500 #no. of wall normal discr points
 axis = 'x'
 axis_direction = 0
 relative_velocity_vec = ['x_velocity', 'y_velocity', 'z_velocity']
