@@ -227,8 +227,9 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	wall_shear_method = temporal.wall_shear_method 
 
 	U_t = data_dict['Ut_mean'][:,istreamwise]
-	U_t[0] = 0.0
 	mag_velocity_rel = data_dict['mag_velocity_rel_mean'][:,istreamwise]
+	U_t[0] = 0.0
+	mag_velocity_rel[0] = 0.0
 	total_pressure = data_dict['static_pressure_mean'][:,istreamwise] + 0.5*density*(data_dict['mag_velocity_rel_mean'][:,istreamwise]**2)
 	total_pressure = total_pressure - total_pressure[0]
 
@@ -258,17 +259,13 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 	elif wall_shear_method == 'smoothed_derivative':
 		tau_wall[istreamwise] = extract_BL_params.get_wall_shear_stress_from_line(hcoor,U_t,density,kinematic_viscosity,filter_size_var=3,filter_size_der=3,npts_interp=3000,maximum_stress=False)
 	elif wall_shear_method == 'shear_fit':
-		U_t[0] = 0.0 # Enforce zero velocity at wall
-
 		# Reinterpolate velocity profile
 		cs = CubicSpline(hcoor,U_t)
 		hcoor_aux = np.linspace(0,0.1,10000)
 		U_t_aux = cs(hcoor_aux)
-
 		# Perform shear fitting
 		params, _ = curve_fit(Ut_function, hcoor_aux[0:10], U_t_aux[0:10], p0=[0.5])
 		tau_wall[istreamwise] = params[0]
-		print('first velocity is ',U_t[0])
 	
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
 
