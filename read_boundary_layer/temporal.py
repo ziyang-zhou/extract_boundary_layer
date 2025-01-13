@@ -1,4 +1,4 @@
-step_per_chunk = 10 #size of each data chunk in terms of number of timesteps
+step_per_chunk = 5 #size of each data chunk in terms of number of timesteps
 total_timesteps = 3000 #last time step read
 starting_timestep = 1800 #Index of timestep to start from
 timestep_size = 1/17863 #size of a timestep
@@ -15,7 +15,7 @@ save_path = '/home/ziyz1701/storage/CD_airfoil/FAN_2025/Result/'
 #Boundary layer extraction parameter
 length_extraction = 0.0075 #slightly higher than as the delta_95
 var_detection = 'U_t'
-nb_points = 350 #no. of wall normal discr points
+nb_points = 700 #no. of wall normal discr points
 axis = 'x'
 axis_direction = 0
 relative_velocity_vec = ['x_velocity', 'y_velocity', 'z_velocity']
