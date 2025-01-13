@@ -1,0 +1,59 @@
+Matplotlib created a temporary config/cache directory at /tmp/matplotlib-ndp_kaha because the default path (/home/m/moreaust/zzhou/.config/matplotlib) is not a writable directory; it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+
+===================================================================
+                          ANTARES 1.18.0
+                    https://cerfacs.fr/antares
+     Copyright 2012-2021, CERFACS. This software is licensed.
+===================================================================
+
+shape of BL line geom (121, 103, 14)
+Traceback (most recent call last):
+  File "04-calc_correlation.py", line 90, in <module>
+    BL_line_prof = r.read()
+  File "/project/m/moreaust/zzhou/antares/v1.18.0/antares/io/Reader.py", line 232, in read
+    base = self.read_data(base)
+  File "/project/m/moreaust/zzhou/antares/v1.18.0/antares/io/Reader.py", line 257, in read_data
+    base = self._data_reader.read_data(base)
+  File "/project/m/moreaust/zzhou/antares/v1.18.0/antares/io/reader/ReaderHdfAntares.py", line 122, in read_data
+    zone_suffix=self.input_keys['zone_suffix'])
+  File "/project/m/moreaust/zzhou/antares/v1.18.0/antares/io/reader/ReaderHdfAntares.py", line 128, in read_base
+    raise ValueError('File {} does not exist.'.format(filename))
+ValueError: File ../../BL_line_prof/BL_line_prof_1800_1810.h5 does not exist.
+
+scontrol show job 14063263
+JobId=14063263 JobName=extract_bl
+   UserId=zzhou(3121872) GroupId=moreaust(6000332) MCS_label=N/A
+   Priority=1349829 Nice=0 Account=rrg-moreaust-ac QOS=normal
+   JobState=COMPLETING Reason=NonZeroExitCode Dependency=(null)
+   Requeue=0 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=1:0
+   RunTime=00:00:24 TimeLimit=23:50:00 TimeMin=N/A
+   SubmitTime=2025-01-12T18:50:22 EligibleTime=2025-01-12T18:50:22
+   AccrueTime=2025-01-12T18:50:22
+   StartTime=2025-01-12T18:50:23 EndTime=2025-01-12T18:50:47 Deadline=N/A
+   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2025-01-12T18:50:23 Scheduler=Main
+   Partition=compute AllocNode:Sid=nia-login05:219199
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=nia0362
+   BatchHost=nia0362
+   NumNodes=1 NumCPUs=80 NumTasks=10 CPUs/Task=1 ReqB:S:C:T=0:0:*:*
+   ReqTRES=cpu=10,mem=175000M,node=1,billing=5
+   AllocTRES=cpu=80,mem=175000M,node=1,billing=40
+   Socks/Node=* NtasksPerN:B:S:C=10:0:*:* CoreSpec=*
+   MinCPUsNode=10 MinMemoryNode=175000M MinTmpDiskNode=0
+   Features=[skylake|cascade] DelayBoot=00:00:00
+   OverSubscribe=NO Contiguous=0 Licenses=(null) Network=(null)
+   Command=/gpfs/fs0/scratch/m/moreaust/zzhou/Reference_DNS_1_voxel_resolution/postprocessing/extract_boundary_layer/read_boundary_layer/submit-python.sh
+   WorkDir=/gpfs/fs0/scratch/m/moreaust/zzhou/Reference_DNS_1_voxel_resolution/postprocessing/extract_boundary_layer/read_boundary_layer
+   Comment=/opt/slurm/bin/sbatch --export=NONE submit-python.sh 
+   StdErr=/gpfs/fs0/scratch/m/moreaust/zzhou/Reference_DNS_1_voxel_resolution/postprocessing/extract_boundary_layer/read_boundary_layer/slurm-14063263.out
+   StdIn=/dev/null
+   StdOut=/gpfs/fs0/scratch/m/moreaust/zzhou/Reference_DNS_1_voxel_resolution/postprocessing/extract_boundary_layer/read_boundary_layer/slurm-14063263.out
+   TresPerTask=cpu=1
+   
+
+sacct -j 14063263
+JobID           JobName    Account    Elapsed  MaxVMSize     MaxRSS  SystemCPU    UserCPU ExitCode 
+------------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- -------- 
+14063263     extract_bl rrg-morea+   00:00:25                         00:00:00   00:00:00      0:0 
+14063263.ba+      batch rrg-morea+   00:00:25                         00:00:00   00:00:00      0:0 
+14063263.ex+     extern rrg-morea+   00:00:25                         00:00:00   00:00:00      0:0 

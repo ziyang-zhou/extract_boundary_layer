@@ -264,7 +264,7 @@ for istreamwise,streamwise_coor in enumerate(scoor):
 		hcoor_aux = np.linspace(0,0.1,10000)
 		U_t_aux = cs(hcoor_aux)
 		# Perform shear fitting
-		params, _ = curve_fit(Ut_function, hcoor_aux[0:10], U_t_aux[0:10], p0=[0.5])
+		params, _ = curve_fit(Ut_function, hcoor_aux[0:5], U_t_aux[0:5], p0=[0.5])
 		tau_wall[istreamwise] = params[0]
 	
 	u_tau_aux = np.sqrt(tau_wall[istreamwise]/density)
