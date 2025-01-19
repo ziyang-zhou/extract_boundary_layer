@@ -385,8 +385,6 @@ fid.close()
 
 
 # In[20]:
-
-
 fid = h5py.File('../mesh/interpolation_3d_grid_dims.hdf5','w')
 fid['/x']=Xvol
 fid['/y']=Yvol
@@ -394,10 +392,13 @@ fid['/z']=Zvol
 fid['/volume']=bv[0][0][('cell_volume','node')]
 fid.close()
 
-
 # In[21]:
-
-
 print('Search distance is: {0:e} m'.format(np.amin(bv[0][0][('cell_volume','node')])**(1./3.)))
 
+#Create a hdf5 mesh for sanjose interpolation
+fout = h5py.File('interp_grid.hdf5','w')
+fout.create_dataset('x', data= Xmat)
+fout.create_dataset('y', data= Ymat)
+fout.create_dataset('z', data= np.zeros_like(Xmat))
+fout.close()
 
