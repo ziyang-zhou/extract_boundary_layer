@@ -122,7 +122,10 @@ for istreamwise,x_coord in enumerate(data['mesh']['x'][:,0]):
 
     # Wall shear
     #params, _ = curve_fit(linear_shear_model, h_coord[0:6], Ut_mean[0:6], p0=[0.5,0.5])
-    params, _ = curve_fit(Ut_function, h_coord[0:2], Ut_mean[0:2], p0=[0.1,0.1])
+    Utcs = CubicSpline(h_coord[0:10],Ut_mean[0:10])
+    hcoor_aux = np.linspace(0,0.0148,5000)
+    Ut_mean_aux = Utcs(hcoor_aux)
+    params, _ = curve_fit(Ut_function, h_coord[0:5], Ut_mean[0:5], p0=[0.1,0.1])
     tau_wall[istreamwise] = params[0]
 
     #RT
