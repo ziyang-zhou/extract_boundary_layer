@@ -101,9 +101,9 @@ for istreamwise,x_coord in enumerate(data['mesh']['x'][:,0]):
     Ut_mean = ((Ux_mean**2 + Uy_mean**2) - Un_mean**2)**0.5
 
     #impose zero velocity at the wall
-    Ut_mean[0] = 0.0
-    Un_mean[0] = 0.0
-    Umag_mean[0] = 0.0
+    #Ut_mean[0] = 0.0
+    #Un_mean[0] = 0.0
+    #Umag_mean[0] = 0.0
 
     uv_mean = (xx_mean - yy_mean)*np.sin(theta)*np.cos(theta) + (np.cos(theta)**2 - np.sin(theta)**2)*xy_mean
     uu_mean = xx_mean*np.cos(theta)**2 - 2*xy_mean*np.sin(theta)*np.cos(theta) + yy_mean*np.sin(theta)**2
@@ -121,7 +121,7 @@ for istreamwise,x_coord in enumerate(data['mesh']['x'][:,0]):
     uv_max[istreamwise] = np.max(uv_mean)
 
     # Wall shear
-    params, _ = curve_fit(linear_shear_model, h_coord[0:6], Ut_mean[0:6], p0=[0.5])
+    params, _ = curve_fit(linear_shear_model, h_coord[0:6], Ut_mean[0:6], p0=[0.5,0.5])
     #params, _ = curve_fit(Ut_function, h_coord[0:5], Ut_mean[0:5], p0=[0.5])
     tau_wall[istreamwise] = params[0]
 
