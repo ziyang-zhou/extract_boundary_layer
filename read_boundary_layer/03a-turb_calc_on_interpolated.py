@@ -31,9 +31,9 @@ def Ut_function(hcoor,tau_wall,density=1.25,kinematic_viscosity=1.44e-5):
 	Ut = hcoor*tau_wall/kinematic_viscosity/density
 	return Ut
 
-def dudy_function(hcoor,tau_wall,density=1.25,kinematic_viscosity=1.44e-5):
-    dudy = tau_wall/(density*kinematic_viscosity)
-    return dudy
+def linear_shear_model(hcoor, tau_wall, offset,density=1.25,kinematic_viscosity=1.44e-5):
+    m = tau_wall/(density*kinematic_viscosity)
+    return m * hcoor + offset
 
 def log_region_finder(y_plus,Ut_plus,nbpts=30000):
 	# Find the lower and upper limit y_plus in the log region and mask y+ and U+ accordingly
@@ -121,7 +121,7 @@ for istreamwise,x_coord in enumerate(data['mesh']['x'][:,0]):
     uv_max[istreamwise] = np.max(uv_mean)
 
     # Wall shear
-    params, _ = curve_fit(dudy_function, h_coord[0:5], np.diff(Ut_mean[0:6]), p0=[0.5])
+    params, _ = curve_fit(linear_shear_model, h_coord[0:6], Ut_mean[0:6], p0=[0.5])
     #params, _ = curve_fit(Ut_function, h_coord[0:5], Ut_mean[0:5], p0=[0.5])
     tau_wall[istreamwise] = params[0]
 
