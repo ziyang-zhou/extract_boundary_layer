@@ -170,3 +170,11 @@ surface_data = pd.DataFrame({
 })
 
 surface_data.to_csv(bl_save_path + '{}_surface_parameter.csv'.format(case_name), index=False)
+
+print('Loading geometry...')
+coordinates_df = {}
+coordinates_df['xBL'] = xcoor/0.1356 + 1.0
+coordinates_df['yBL'] = ycoor/0.1356
+coordinates_df = pd.DataFrame(coordinates_df)
+coordinates_df.index.name = 'idxBL'
+coordinates_df.to_csv(bl_save_path + '{}_coordinates.csv'.format(case_name))
