@@ -44,7 +44,7 @@ xvals=[-0.0307167,-0.0293987,-0.000383135,-0.00220858,-0.0307167]
 yvals=[0.0120501,0.0166085,0.00613008,0.00174928,0.0120501]
 
 #Define the aoa
-angle_of_attack = '15deg' # angle of rotation of airfoil with respect to 8 deg config
+angle_of_attack = '8deg' # angle of rotation of airfoil with respect to 8 deg config
 # In[5]:
 x_coord_list = list(b['Geometry']['X'])
 x_coord_list = x_coord_list[::10000]

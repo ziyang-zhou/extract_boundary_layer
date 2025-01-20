@@ -55,7 +55,8 @@ def log_law_fit(y_plus,kappa,B):
 # ---------------------
 
 case_name = 'L08'
-density = temporal.density
+density = eval(temporal.density)
+kinematic_viscosity = eval(temporal.kinematic_viscosity)
 project_path = temporal.project_path
 bl_save_path = project_path + 'boundary_layer_profile/'
 interpolated_path = temporal.interpolated_path
@@ -94,6 +95,11 @@ for istreamwise,x_coord in enumerate(data['mesh']['x'][:,0]):
     h_coord = ((data['mesh']['x'][istreamwise,:]-data['mesh']['x'][istreamwise,0])**2 + (data['mesh']['y'][istreamwise,:]-data['mesh']['y'][istreamwise,0])**2)**0.5
     Un_mean = n_vec[0]*Ux_mean + n_vec[1]*Uy_mean
     Ut_mean = ((Ux_mean**2 + Uy_mean**2) - Un_mean**2)**0.5
+
+    #impose zero velocity at the wall
+    Ut_mean[0] = 0.0
+    Un_mean[0] = 0.0
+    Umag_mean[0] = 0.0
 
     uv_mean = (xx_mean - yy_mean)*np.sin(theta)*np.cos(theta) + (np.cos(theta)**2 - np.sin(theta)**2)*xy_mean
     uu_mean = xx_mean*np.cos(theta)**2 - 2*xy_mean*np.sin(theta)*np.cos(theta) + yy_mean*np.sin(theta)**2
