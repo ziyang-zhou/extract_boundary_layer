@@ -173,22 +173,11 @@ else:
 	x_coord = x_coord_suction_ascending
 	y_coord = y_coord_suction_ascending
 
-plt.figure()
-plt.plot(x_coord,y_coord)
-plt.plot(xvals,yvals)
-plt.savefig('../mesh/domain_plot.png')
-print('full domain saved')
 # In[6]:
 xmin = le_cut
 xmax = te_cut
 
 keep=(x_coord>xmin)*(x_coord<xmax)
-plt.figure()
-plt.plot(xvals,yvals,linestyle='dashed')
-plt.plot(x_coord[keep],y_coord[keep])
-plt.axis('equal')
-plt.savefig('../mesh/domain_extent.png')
-print('extracted domain saved')
 
 # In[7]:
 
@@ -253,20 +242,6 @@ vec_n_prof = np.zeros((npts_prof,3))
 vec_n_prof[:,0] = -sim.gaussian_filter1d(vec_t_prof[:,1],sigma=10, order=0, mode='nearest')
 vec_n_prof[:,1] = sim.gaussian_filter1d(vec_t_prof[:,0],sigma=10, order=0, mode='nearest')
 
-plt.figure(figsize=(15,10))
-plt.plot(vec_x_prof,vec_n_prof[:,1])
-plt.savefig('../mesh/surface_vector.png')
-
-# In[10]:
-plt.figure()
-plt.plot(vec_x_prof,vec_y_prof,'.')
-plt.quiver(vec_x_prof,vec_y_prof,vec_n_prof[:,0],vec_n_prof[:,1])
-plt.plot(xvals,yvals,linestyle='dashed')
-plt.plot(x_coord[keep],y_coord[keep])
-plt.axis('equal')
-plt.savefig('../mesh/surface_vector_2.png')
-
-# In[11]:
 N_0 = 0
 while target_height > N_0:
     Nn += 1
@@ -277,123 +252,12 @@ while target_height > N_0:
     vec_n = np.zeros(Nn+1,)
     vec_n[1:] = np.cumsum(dn)
     N_0 = np.max(vec_n[1:])
-    
-plt.figure()
-plt.plot(vec_n,'o')
-plt.savefig('../mesh/normal_vector.png')
-
-
-# In[12]:
-
 
 Xmat = np.zeros((npts_prof,Nn+1))
 Ymat = np.zeros((npts_prof,Nn+1))
 for idx,nv in enumerate(vec_n):
     Xmat[:,idx] = vec_x_prof + nv*vec_n_prof[:,0]
     Ymat[:,idx] = vec_y_prof + nv*vec_n_prof[:,1]
-    
-plt.figure()
-plt.contourf(Xmat,Ymat,np.ones_like(Xmat),linestyles='solid')
-plt.axis('equal')
-plt.savefig('../mesh/surface_grid')
-
-
-# In[13]:
-
-
-bi = Base()
-bi.init()
-bi[0][0]['x']=Xmat
-bi[0][0]['y']=Ymat
-w=Writer('bin_tp')
-w['base']=bi
-w['filename']='../mesh/interpolation_grid.plt'
-w.dump()
-
-
-# In[14]:
-
-
-vec_z = np.arange(zmin+dr/2,zmax+dr/2,dr)
-Nz = vec_z.size
-print((zmax - zmin )/dr)
-print(vec_z[-1])
-print(Nz)
-
-plt.plot([0,0],[zmin,zmin],'o')
-plt.plot([Nz,Nz],[zmax,zmax],'s')
-plt.plot(vec_z)
-plt.show()
-
-
-# In[15]:
-
-
-Xvol = np.repeat(Xmat[:, :, np.newaxis], Nz, axis=2)
-Yvol = np.repeat(Ymat[:, :, np.newaxis], Nz, axis=2)
-Zyz = np.repeat(vec_z[np.newaxis,:], Nn+1, axis=0)
-Zvol = np.repeat(Zyz[np.newaxis,:,:], npts_prof, axis=0)
-Nxy = np.repeat(vec_n_prof[:,np.newaxis,:],Nn+1,axis=1)
-Nvol = np.repeat(Nxy[:,:,np.newaxis,:],Nz,axis=2)
-
-
-# In[16]:
-
-bv = Base()
-bv.init()
-bv[0][0]['x']=Xvol
-bv[0][0]['y']=Yvol
-bv[0][0]['z']=Zvol
-bv[0][0]['norm_x']=Nvol[:,:,:,0]
-bv[0][0]['norm_y']=Nvol[:,:,:,1]
-bv[0][0]['norm_z']=Nvol[:,:,:,2]
-# For visualization / quality check 
-w=Writer('bin_tp')
-w['filename']='../mesh/interpolation_3d_grid.plt'
-w['base']=bv
-w.dump()
-# For later usage
-w=Writer('hdf_antares')
-w['filename']='../mesh/interpolation_3d_grid'
-w['base']=bv
-w.dump()
-
-
-# In[17]:
-
-
-bv.compute_cell_volume()
-
-
-# In[18]:
-
-
-bv.cell_to_node()
-print(np.amin(bv[0][0][('cell_volume','node')]))
-print(np.amax(bv[0][0][('cell_volume','node')]))
-
-
-# In[19]:
-
-
-fid = h5py.File('../mesh/interpolation_3d_grid.hdf5','w')
-fid['/x']=Xvol.flatten()
-fid['/y']=Yvol.flatten()
-fid['/z']=Zvol.flatten()
-fid['/volume']=bv[0][0][('cell_volume','node')].flatten()
-fid.close()
-
-
-# In[20]:
-fid = h5py.File('../mesh/interpolation_3d_grid_dims.hdf5','w')
-fid['/x']=Xvol
-fid['/y']=Yvol
-fid['/z']=Zvol
-fid['/volume']=bv[0][0][('cell_volume','node')]
-fid.close()
-
-# In[21]:
-print('Search distance is: {0:e} m'.format(np.amin(bv[0][0][('cell_volume','node')])**(1./3.)))
 
 #Create a hdf5 mesh for sanjose interpolation
 fout = h5py.File('interp_grid.hdf5','w')
@@ -402,3 +266,10 @@ fout.create_dataset('y', data= Ymat)
 fout.create_dataset('z', data= np.zeros_like(Xmat))
 fout.close()
 
+# Visualize the 2D mesh
+plt.figure(figsize=(10, 8))
+plt.pcolormesh(Xmat, Ymat, shading='auto', cmap='viridis')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.title('2D Mesh Visualization')
+plt.show()
