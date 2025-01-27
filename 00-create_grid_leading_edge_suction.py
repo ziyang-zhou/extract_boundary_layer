@@ -28,7 +28,6 @@ delta_95 = eval(settings.at["delta_95", settings.columns[0]]) #Read the boundary
 
 file = '../mesh/tr-meas-surface_first_70511.hdf5'
 b = h5py.File(file,'r')
-os.makedirs('path/to/directory', exist_ok=True)
 
 dn0 = eval(settings.at["dn0", settings.columns[0]]) # height of first grid cell from wall
 dn_max = eval(settings.at["dn_max", settings.columns[0]]) # Max allowable size of boundary layer grid
@@ -39,17 +38,15 @@ Nn = eval(settings.at["Nn", settings.columns[0]]) # Min number of cells in bound
 #Investigate content of file
 print('zones in base b',b.keys())
 print('instants in base b',b['Geometry'].keys())
-# In[4]:
-xvals=[-0.0307167,-0.0293987,-0.000383135,-0.00220858,-0.0307167]
-yvals=[0.0120501,0.0166085,0.00613008,0.00174928,0.0120501]
 
 #Define the aoa
 angle_of_attack = '8deg' # angle of rotation of airfoil with respect to 8 deg config
 # In[5]:
+nskip = 10000
 x_coord_list = list(b['Geometry']['X'])
-x_coord_list = x_coord_list[::10000]
+x_coord_list = x_coord_list[::nskip]
 y_coord_list = list(b['Geometry']['Y'])
-y_coord_list = y_coord_list[::10000]
+y_coord_list = y_coord_list[::nskip]
 # Convert lists to NumPy arrays
 x_coord = np.array(x_coord_list)
 y_coord = np.array(y_coord_list)
@@ -60,27 +57,8 @@ y_coord = y_coord[mask]
 print('x_coord min',min(x_coord))
 print('y_coord max',max(y_coord))
 
-#Define function to rotate the original camber line setup for 8 deg case
-def rotate_points(x, y, x_0, y_0, angle_degrees):
-    # Convert angle to radians
-    angle_radians = math.radians(angle_degrees)
-    
-    # Translate points so that the rotation center is at the origin
-    x_translated = x - x_0
-    y_translated = y - y_0
-    
-    # Perform rotation using rotation matrix
-    x_rotated = x_translated * np.cos(angle_radians) + y_translated * np.sin(angle_radians)
-    y_rotated = -x_translated * np.sin(angle_radians) + y_translated * np.cos(angle_radians)
-    
-    # Translate points back to their original position
-    x_new = x_rotated + x_0
-    y_new = y_rotated + y_0
-    
-    return x_new, y_new
-
-
 #Define a piecewise mean camber line to differentiate suction points from pressure points
+#8deg
 def f_1(x):
     # Define the points for the first line segment
     x1 = -0.14
@@ -100,7 +78,8 @@ def f_1(x):
         m=(y4-y3)/(x4-x3)
         # Handle values of x outside the defined segments
         return  m*x# You can choose to return a default value or raise an error
-    
+
+#15deg
 def f_2(x):
     # Define the points for the first line segment
     x1 = -0.14
@@ -194,8 +173,6 @@ fy = sintp.interp1d(sprof,yprof)
 
 # In[8]:
 #declaration of dr - step size in new curvilinear array of streamwise coordinate.
-zmin = -0.0075776
-zmax = 0.0075776
 npts_chord = eval(settings.at["npts_chord", settings.columns[0]]) # height of first grid cell from wall
 dr = abs(le_cut - te_cut)/npts_chord
 
@@ -242,6 +219,7 @@ vec_n_prof = np.zeros((npts_prof,3))
 vec_n_prof[:,0] = -sim.gaussian_filter1d(vec_t_prof[:,1],sigma=10, order=0, mode='nearest')
 vec_n_prof[:,1] = sim.gaussian_filter1d(vec_t_prof[:,0],sigma=10, order=0, mode='nearest')
 
+#Create the wall normal vector 
 N_0 = 0
 while target_height > N_0:
     Nn += 1
@@ -266,10 +244,11 @@ fout.create_dataset('y', data= Ymat)
 fout.create_dataset('z', data= np.zeros_like(Xmat))
 fout.close()
 
-# Visualize the 2D mesh
-plt.figure(figsize=(10, 8))
-plt.pcolormesh(Xmat, Ymat, shading='auto', cmap='viridis')
-plt.xlabel('X')
-plt.ylabel('Y')
-plt.title('2D Mesh Visualization')
-plt.show()
+# Visualize the 2D mesh Draw horizontal lines
+for i in range(Xmat.shape[0]):
+    plt.plot(Xmat[i, :], Ymat[i, :], color='black', linewidth=0.5)
+# Draw vertical lines
+for j in range(Xmat.shape[1]):
+    plt.plot(Xmat[:, j], Ymat[:, j], color='black', linewidth=0.5)
+
+plt.savefig('../mesh/2D_mesh.png')
