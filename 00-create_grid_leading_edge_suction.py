@@ -111,10 +111,10 @@ y_coord_pressure = []
 for i in range(len(x_coord)):
     x = x_coord[i]
     y = y_coord[i]
-if angle_of_attack == '8deg':
-    mean_camber = f_1(x)  # Calculate the mean camber for the current x
-elif angle_of_attack == '15deg':
-    mean_camber = f_2(x)
+    if angle_of_attack == '8deg':
+        mean_camber = f_1(x)  # Calculate the mean camber for the current x
+    elif angle_of_attack == '15deg':
+        mean_camber = f_2(x)
     print('mean_camber',mean_camber)
     print('y',y)
     if y > mean_camber:
