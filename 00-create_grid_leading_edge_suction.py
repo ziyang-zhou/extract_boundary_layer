@@ -43,13 +43,18 @@ print('instants in base b',b['Geometry'].keys())
 angle_of_attack = '8deg' # angle of rotation of airfoil with respect to 8 deg config
 # In[5]:
 nskip = 10000
-x_coord_list = list(b['Geometry']['X'])
-x_coord_list = x_coord_list[::nskip]
-y_coord_list = list(b['Geometry']['Y'])
-y_coord_list = y_coord_list[::nskip]
+finest_voxel_size=0.0000148
+mid_plane_halfwidth = 3*finest_voxel_size
+z_coord_array = np.array(list(b['Geometry']['Z']))
+z_mask = (z_coord_array < mid_plane_halfwidth) & (z_coord_array > -mid_plane_halfwidth)
+
+x_coord_array = np.array(list(b['Geometry']['X']))
+x_coord_array = x_coord_array[z_mask]
+y_coord_array = np.array(list(b['Geometry']['Y']))
+y_coord_array = y_coord_array[z_mask]
 # Convert lists to NumPy arrays
-x_coord = np.array(x_coord_list)
-y_coord = np.array(y_coord_list)
+x_coord = np.array(x_coord_array)
+y_coord = np.array(y_coord_array)
 #Cut off the LE and TE radii to simplify the geometry
 mask = (x_coord >= le_cut) & (x_coord <= te_cut)
 x_coord = x_coord[mask]
@@ -252,5 +257,5 @@ for j in range(Xmat.shape[1]):
     plt.plot(Xmat[:, j], Ymat[:, j], color='black', linewidth=0.5)
 
 plt.xlabel('x (m)')
-plt.xlabel('y (m)')
+plt.ylabel('y (m)')
 plt.savefig('../mesh/2D_mesh.png')
