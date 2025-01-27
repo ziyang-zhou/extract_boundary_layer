@@ -111,22 +111,22 @@ y_coord_pressure = []
 for i in range(len(x_coord)):
     x = x_coord[i]
     y = y_coord[i]
-    if angle_of_attack == '8deg':
-        mean_camber = f_1(x)  # Calculate the mean camber for the current x
-    elif angle_of_attack == '15deg':
-        mean_camber = f_2(x)
+if angle_of_attack == '8deg':
+    mean_camber = f_1(x)  # Calculate the mean camber for the current x
+elif angle_of_attack == '15deg':
+    mean_camber = f_2(x)
     print('mean_camber',mean_camber)
     print('y',y)
     if y > mean_camber:
-        # If y is greater than the mean camber, add to the greater subgroup
+        # If y is greater than the mean camber, add to the suction subgroup
         x_coord_suction.append(x)
         y_coord_suction.append(y)
     else:
-        # If y is smaller than or equal to the mean camber, add to the smaller subgroup
+        # If y is smaller than or equal to the mean camber, add to the pressure subgroup
         x_coord_pressure.append(x)
         y_coord_pressure.append(y)
-# Convert the lists to NumPy arrays if needed
 
+# Convert the lists to NumPy arrays if needed
 x_coord_pressure = np.array(x_coord_pressure)
 y_coord_pressure = np.array(y_coord_pressure)
 x_coord_suction = np.array(x_coord_suction)
@@ -251,4 +251,6 @@ for i in range(Xmat.shape[0]):
 for j in range(Xmat.shape[1]):
     plt.plot(Xmat[:, j], Ymat[:, j], color='black', linewidth=0.5)
 
+plt.xlabel('x (m)')
+plt.xlabel('y (m)')
 plt.savefig('../mesh/2D_mesh.png')
