@@ -42,8 +42,7 @@ print('instants in base b',b['Geometry'].keys())
 #Define the aoa
 angle_of_attack = '8deg' # angle of rotation of airfoil with respect to 8 deg config
 # In[5]:
-nskip = 10000
-finest_voxel_size=0.0000148
+finest_voxel_size=0.0000148 # This is the smallest voxel size in the simulation
 mid_plane_halfwidth = 3*finest_voxel_size
 z_coord_array = np.array(list(b['Geometry']['Z']))
 z_mask = (z_coord_array < mid_plane_halfwidth) & (z_coord_array > -mid_plane_halfwidth)
