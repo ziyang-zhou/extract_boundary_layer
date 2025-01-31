@@ -27,8 +27,8 @@ def normalize_vector(vec):
         raise ValueError("Cannot normalize a zero vector")
     return vec / magnitude
 
-def Ut_function(hcoor,tau_wall,offset,density=1.25,kinematic_viscosity=1.44e-5):
-	Ut = hcoor*tau_wall/kinematic_viscosity/density+offset
+def Ut_function(hcoor,tau_wall,density=1.25,kinematic_viscosity=1.44e-5):
+	Ut = hcoor*tau_wall/kinematic_viscosity/density
 	return Ut
 
 def linear_shear_model(hcoor, tau_wall, offset,density=1.25,kinematic_viscosity=1.44e-5):
@@ -122,10 +122,7 @@ for istreamwise,x_coord in enumerate(data['mesh']['x'][:,0]):
 
     # Wall shear
     #params, _ = curve_fit(linear_shear_model, h_coord[0:6], Ut_mean[0:6], p0=[0.5,0.5])
-    Utcs = CubicSpline(h_coord[0:10],Ut_mean[0:10])
-    hcoor_aux = np.linspace(0,0.0148,5000)
-    Ut_mean_aux = Utcs(hcoor_aux)
-    params, _ = curve_fit(Ut_function, h_coord[0:5], Ut_mean[0:5], p0=[0.1,0.1])
+    params, _ = curve_fit(Ut_function, h_coord[0:5], Ut_mean[0:5], p0=[0.1])
     tau_wall[istreamwise] = params[0]
 
     #RT
